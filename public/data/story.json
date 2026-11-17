@@ -1,0 +1,76 @@
+{
+ "totals": {
+  "surveys": 41361,
+  "sites": 12702,
+  "countries": 90,
+  "first_year": 1980,
+  "last_year": 2020
+ },
+ "heat_bins": {
+  "surveys_with_heat": 34393,
+  "bins": [
+   {
+    "label": "0",
+    "surveys": 23322,
+    "severe_rate": 3.0
+   },
+   {
+    "label": "0 to 2",
+    "surveys": 4573,
+    "severe_rate": 6.6
+   },
+   {
+    "label": "2 to 4",
+    "surveys": 3121,
+    "severe_rate": 13.2
+   },
+   {
+    "label": "4 to 8",
+    "surveys": 2434,
+    "severe_rate": 28.5
+   },
+   {
+    "label": "8 or more",
+    "surveys": 943,
+    "severe_rate": 35.4
+   }
+  ]
+ },
+ "caribbean_2005": {
+  "surveys": 2813,
+  "severe_rate": 29.6
+ },
+ "top_regions": [
+  {
+   "rank": 1,
+   "name": "Southern Great Barrier Reef",
+   "severe_rate": 34.1,
+   "surveys": 343
+  },
+  {
+   "rank": 2,
+   "name": "Kenya and Tanzania coast",
+   "severe_rate": 25.0,
+   "surveys": 224
+  },
+  {
+   "rank": 3,
+   "name": "Hispaniola Puerto Rico and Lesser Antilles",
+   "severe_rate": 17.5,
+   "surveys": 2640
+  },
+  {
+   "rank": 4,
+   "name": "Central and northern Great Barrier Reef",
+   "severe_rate": 16.8,
+   "surveys": 1409
+  },
+  {
+   "rank": 5,
+   "name": "South Ryukyu Islands Japan",
+   "severe_rate": 12.7,
+   "surveys": 393
+  }
+ ],
+ "ranked_count": 31
+}

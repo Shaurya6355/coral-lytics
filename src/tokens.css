@@ -1,0 +1,33 @@
+:root{
+  /* grounds */
+  --white:#FFFFFF; --band:#ECF0F4; --black:#000000;
+  /* ink on white */
+  --ink:#0A0A0A; --muted:#5C6670; --hair:#D9DEE3; --hair-soft:#E1E5EA;
+  /* ink on black */
+  --ink-d:#FFFFFF; --muted-d:#A3ABB3; --hair-d:#2E3338;
+  /* maps */
+  --land:#2F3640; --land-d:#2A2E33; --reef:#7CC3B6; --reef-d:#1F6F64;
+  /* coral bleaching scale: teal drains to white */
+  --c0:#0E8C7B;  /* no bleaching */
+  --c1:#5FB8A8;  /* under 20% */
+  --c2:#B7E0D7;  /* 20 to 49% */
+  --c3:#FFFFFF;  /* 50% or more: severe. On white grounds add a 0.7px #0A0A0A edge */
+  /* heat scale (degree heating weeks) */
+  --h1:#FFD84D;  /* 1 to 4, watch */
+  --h2:#FF9F1C;  /* 4 to 8, bleaching likely */
+  --h3:#F0553F;  /* 8 to 12, severe */
+  --h4:#B3122D;  /* 12 or more */
+  --heat-text:#C2412D; /* heat chart titles on white */
+  /* accents */
+  --teal-label:#0E8C7B; --teal-label-d:#3CC4AE; /* chapter eyebrows */
+  --focus:#0A0A0A; --hover-ring:#F0553F;
+  /* glass panels on maps */
+  --glass:rgba(255,255,255,.94); --glass-border:#E1E5EA; --shadow:0 6px 24px rgba(10,10,10,.10);
+  /* shape */
+  --r-photo:4px; --r-panel:16px; --r-card:18px; --pill:999px;
+  /* motion */
+  --ease-out:cubic-bezier(.22,1,.36,1); --ease-inout:cubic-bezier(.65,0,.35,1);
+  --t-fast:150ms; --t-base:250ms; --t-slow:600ms;
+  /* layout */
+  --gutter:64px; --nav-h:72px; --max:1440px;
+}

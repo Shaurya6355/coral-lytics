@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coral-lytics: Explore scrubber prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0A0A0A;--mut:#5C6670;--hair:#D9DEE3;--band:#ECF0F4;--land:#2F3640;--live:#0E8C7B;--lo:#5FB8A8;--md:#B7E0D7;--hi:#FFFFFF;
+--h1:#FFD84D;--h2:#FF9F1C;--h3:#F0553F;--h4:#B3122D;--ease:cubic-bezier(.22,1,.36,1);--glass:rgba(255,255,255,.94);--shadow:0 6px 24px rgba(10,10,10,.10)}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;color:var(--ink);font-family:'Inter Tight','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+nav{height:64px;display:flex;align-items:center;gap:56px;padding:0 4.4vw;border-bottom:1px solid var(--hair)}
+nav .logo{font-size:20px;font-weight:700;letter-spacing:-.02em}
+nav .links{display:flex;gap:32px;margin-right:auto}
+nav .links a{font-size:15px;font-weight:500;color:var(--mut);text-decoration:none;padding:8px 0;border-bottom:2px solid transparent}
+nav .links a.on{color:var(--ink);font-weight:600;border-color:var(--ink)}
+.stage{position:relative;width:100%;aspect-ratio:1440/449;margin-top:12px}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.pill{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:999px;background:var(--glass);border:1px solid #E1E5EA;box-shadow:var(--shadow);font-size:13px;font-weight:600;cursor:pointer;transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.pill:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(10,10,10,.14)}
+.pill:focus-visible,.handle:focus-visible,.row:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+#regBtn{position:absolute;left:24px;top:16px;z-index:3}
+#panel{position:absolute;left:24px;top:16px;width:380px;max-height:calc(100% - 32px);overflow:auto;z-index:4;border-radius:18px;background:var(--glass);border:1px solid #E1E5EA;box-shadow:var(--shadow);
+ opacity:0;transform:translateY(-8px) scale(.98);transform-origin:top left;pointer-events:none;transition:opacity .22s var(--ease),transform .28s var(--ease)}
+#panel.open{opacity:1;transform:none;pointer-events:auto}
+#panel header{display:flex;justify-content:space-between;align-items:flex-start;padding:18px 18px 10px}
+#panel h2{margin:0;font-size:22px;font-weight:650;letter-spacing:-.02em}
+#panel p{margin:2px 0 0;font-size:12px;color:var(--mut)}
+#panel .x{width:44px;height:44px;margin:-8px -8px 0 0;border:0;background:none;font-size:20px;cursor:pointer}
+.row{display:grid;grid-template-columns:22px 1fr 44px;gap:10px;align-items:center;padding:10px 18px;border-top:1px solid #E1E5EA;font-size:13px;cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left}
+.row:hover{background:var(--band)}
+.row .bar{display:block;margin-top:6px;height:5px;border-radius:3px;background:var(--ink)}
+.row b{font-weight:600}
+#tip{position:absolute;z-index:5;pointer-events:none;min-width:200px;padding:12px 14px;border-radius:14px;background:var(--glass);border:1px solid #E1E5EA;box-shadow:var(--shadow);font-size:13px;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s var(--ease)}
+#tip.on{opacity:1;transform:none}
+#tip .n{font-size:14px;font-weight:600}#tip .m{color:var(--mut);margin-top:2px}
+#legend{margin:14px 24px 0;display:inline-flex;gap:18px;align-items:center;font-size:13px;font-weight:500;padding:0 22px;height:44px;border-radius:999px;background:#fff;border:1px solid #E1E5EA;box-shadow:var(--shadow);white-space:nowrap}
+#legend .sw{display:inline-flex;border-radius:4px;overflow:hidden}#legend .sw i{width:28px;height:12px;display:block}
+.dot{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:-2px;margin-right:6px}
+.dot.w{border:1px solid var(--ink)}
+.band{margin-top:18px;background:var(--band);border-top:1px solid #D9DEE3;padding:28px 4.4vw 32px;display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:end}
+.yearbox{display:flex;align-items:center;gap:16px}
+#play{width:56px;height:56px;border-radius:50%;border:0;background:var(--ink);color:#fff;display:grid;place-items:center;cursor:pointer;transition:transform .15s var(--ease)}
+#play:active{transform:scale(.94)}
+#year{font-size:52px;font-weight:650;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.speed{margin-top:14px;display:flex;gap:8px;align-items:center;font-size:12px;color:var(--mut)}
+.speed button{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--hair);background:#fff;font-size:13px;font-weight:600;cursor:pointer}
+.speed button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chart{position:relative}
+.chart h3{margin:0 0 10px;font-size:13px;font-weight:600}
+#bars{display:block;width:100%;height:150px;overflow:visible;touch-action:none;cursor:pointer}
+.handle{cursor:grab}
+.handle:active{cursor:grabbing}
+.jumps{position:absolute;top:0;right:0;display:flex;gap:16px}
+.jumps button{border:0;background:none;padding:0;font-size:12px;font-weight:600;text-decoration:underline;cursor:pointer}
+.hint{margin-top:10px;font-size:13px;color:var(--mut)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;background:var(--ink);color:#fff;padding:12px 18px;border-radius:999px;font-size:14px;font-weight:500;transition:all .25s var(--ease);z-index:9}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#noheat{position:absolute;right:24px;bottom:16px;font-size:13px;font-weight:600;color:var(--mut);background:#fff;padding:8px 14px;border-radius:999px;border:1px solid var(--hair);opacity:0;transition:opacity .3s}
+#noheat.on{opacity:1}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<nav aria-label="Chapters"><span class="logo">Coral-lytics</span><div class="links"><a href="#">Reef</a><a href="#">Bleaching</a><a href="#">Heat</a><a href="#">Risk</a><a href="#" class="on">Explore</a></div><a href="#" style="font-size:15px;color:var(--mut);text-decoration:none">Coral gallery</a></nav>
+<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Explore coral bleaching and ocean heat, 1980 to 2020</h1>
+<div class="stage" id="stage">
+  <canvas id="cv" aria-label="World map. Heat stress glows yellow to red. Survey sites are dots: teal is healthy, white is severely bleached." role="img"></canvas>
+  <button class="pill" id="regBtn" aria-expanded="false" aria-controls="panel"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 4h10M3 8h10M3 12h10"/></svg>Regions</button>
+  <div id="panel" role="dialog" aria-label="Regions"><header><div><h2>Regions</h2><p>Ranked by how often surveys found severe bleaching</p></div><button class="x" id="close" aria-label="Close the regions list">×</button></header><div id="rows"></div></div>
+  <div id="tip" role="status"></div>
+  <div id="noheat">No heat data before 1985</div>
+</div>
+<div id="legend"><b>Heat stress</b><span>Low</span><span class="sw"><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i></span><span>Extreme</span><span style="width:1px;height:16px;background:var(--hair)"></span><b>Coral bleached</b>
+<span><i class="dot" style="background:var(--live)"></i>None</span><span><i class="dot" style="background:var(--lo)"></i>Under 20%</span><span><i class="dot" style="background:var(--md)"></i>20 to 49%</span><span><i class="dot w" style="background:#fff"></i>50% or more</span><span style="opacity:.6"><i class="dot" style="background:var(--lo)"></i>Last year, fading</span></div>
+<section class="band" aria-label="Time scrubber">
+  <div><div class="yearbox"><button id="play" aria-label="Play through the years"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path id="playIcon" d="M5 3l8 5-8 5z"/></svg></button><div id="year" aria-live="polite">2005</div></div>
+  <div class="speed">Speed <button data-s="0.5">0.5×</button><button data-s="1" class="on">1×</button><button data-s="2">2×</button></div></div>
+  <div class="chart"><h3>Sites surveyed per year. Black is severe bleaching.</h3>
+   <div class="jumps"><button data-y="1998">1998</button><button data-y="2010">2010</button><button data-y="2016">2016</button></div>
+   <svg id="bars" role="slider" aria-label="Year" aria-valuemin="1980" aria-valuemax="2020"></svg>
+   <div class="hint">Drag the handle, press play, or use the arrow keys. Click a dot to open its event.</div></div>
+</section>
+<div id="toast"></div>
+<script>
+// D is precomputed map data (see handover, section Data). In the real site, load it from public/data and project with d3-geo.
+const D=__DATA__;
+const Y0=1980,Y1=2020,HEATCOL=['#FFD84D','#FF9F1C','#F0553F','#B3122D'];
+const SEV=p=>p>=50?'#FFFFFF':p>=20?'#B7E0D7':p>0?'#5FB8A8':'#0E8C7B';
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage');
+let dpr=1,scale=1,year=2005,prevYear=null,t0=0,playing=false,speed=1,hoverRegion=null,hoverDot=null;
+const landPath=new Path2D(D.land);
+// ---------- offscreen layers (drawn in 1440 x H map units, then scaled)
+function makeLayer(){const c=document.createElement('canvas');c.width=Math.round(D.W*dpr*scale);c.height=Math.round(D.H*dpr*scale);const g=c.getContext('2d');g.setTransform(dpr*scale,0,0,dpr*scale,0,0);return [c,g];}
+let landLayer,heatCache={};
+function drawLand(){const [c,g]=makeLayer();g.fillStyle='#2F3640';g.fill(landPath);landLayer=c;heatCache={};}
+function heatLayer(y){ // soft glow: one blurred circle per 4-degree cell, coloured by level
+  if(heatCache[y])return heatCache[y];const [c,g]=makeLayer();const s=D.heat[y];if(!s){heatCache[y]=c;return c;}
+  g.filter=`blur(${12*scale*dpr}px)`; // blur in device pixels
+  for(let lv=1;lv<=4;lv++){g.fillStyle=HEATCOL[lv-1];g.globalAlpha=[0,.25,.45,.6,.7][lv];g.beginPath();
+    for(let i=0;i<s.length;i++){if(+s[i]!==lv)continue;const [x,yy]=D.cells[i];if(x<-100)continue;g.moveTo(x+15,yy);g.arc(x,yy,15,0,Math.PI*2);}g.fill();}
+  heatCache[y]=c;return c;}
+// ---------- sizing
+function resize(){const r=stage.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1);scale=r.width/D.W;cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);drawLand();buildIndex();drawBars();}
+// ---------- dot index for hover (simple grid buckets)
+let bucket={};
+function buildIndex(){bucket={};for(const [si,pb] of (D.years[year]||[])){const [x,y]=D.site_xy[si];const k=(x>>4)+','+(y>>4);(bucket[k]||(bucket[k]=[])).push([si,pb]);}}
+function nearest(mx,my){let best=null,bd=10/scale;const cx=mx>>4,cy=my>>4;for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){for(const d of (bucket[(cx+i)+','+(cy+j)]||[])){const [x,y]=D.site_xy[d[0]];const dd=Math.hypot(x-mx,y-my);if(dd<bd){bd=dd;best=d;}}}return best;}
+// ---------- easing
+const easeOut=t=>1-Math.pow(1-t,3), easeBack=t=>{const c=1.70158;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)};
+// ---------- render loop
+function frame(now){
+  const T=reduce?1:Math.min(1,(now-t0)/600); // 600 ms year transition
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);
+  // heat first (under the land), crossfading from last year over 600 ms
+  if(prevYear&&T<1){ctx.globalAlpha=1-easeOut(T);ctx.drawImage(heatLayer(prevYear),0,0);}
+  ctx.globalAlpha=prevYear?easeOut(T):1;ctx.drawImage(heatLayer(year),0,0);ctx.globalAlpha=1;
+  ctx.drawImage(landLayer,0,0);
+  ctx.setTransform(dpr*scale,0,0,dpr*scale,0,0);
+  // region hover outline
+  if(hoverRegion){ctx.setLineDash([5,4]);ctx.lineWidth=1.5/scale;ctx.strokeStyle='#0A0A0A';ctx.beginPath();hoverRegion.box.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.stroke();ctx.setLineDash([]);}
+  // last year's dots, fading to 35%
+  const r=2.6;
+  if(D.years[year-1]){ctx.globalAlpha=.35;for(const [si,pb] of D.years[year-1]){const [x,y]=D.site_xy[si];ctx.fillStyle=SEV(pb);ctx.beginPath();ctx.arc(x,y,r*.8,0,7);ctx.fill();}ctx.globalAlpha=1;}
+  // this year's dots pop in, staggered left to right over 250 ms, healthy first so white sits on top
+  const arr=D.years[year]||[];
+  for(const [si,pb] of arr){const [x,y]=D.site_xy[si];const delay=(x/D.W)*.25;const k=reduce?1:Math.max(0,Math.min(1,(T-delay)/.6));if(k<=0)continue;
+    const rr=r*easeBack(k);ctx.fillStyle=SEV(pb);ctx.beginPath();ctx.arc(x,y,rr,0,7);ctx.fill();if(pb>=50){ctx.lineWidth=.7;ctx.strokeStyle='#0A0A0A';ctx.stroke();}}
+  if(hoverDot){const [x,y]=D.site_xy[hoverDot[0]];ctx.lineWidth=2;ctx.strokeStyle='#F0553F';ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.stroke();}
+  requestAnimationFrame(frame);}
+// ---------- year changes
+const yearEl=document.getElementById('year'),noheat=document.getElementById('noheat');
+function setYear(y,anim=true){y=Math.max(Y0,Math.min(Y1,y));if(y===year)return;prevYear=anim?year:null;year=y;t0=performance.now();yearEl.textContent=y;buildIndex();drawBars();noheat.classList.toggle('on',y<1985);hideTip();}
+// ---------- scrubber bars
+const svg=document.getElementById('bars');let BW,BX0;
+function drawBars(){const w=svg.getBoundingClientRect().width,h=150,base=118,n=Y1-Y0+1;BW=w/n;BX0=0;const max=Math.max(...Object.values(D.yr).map(v=>v[0]));
+  let s=`<rect x="0" y="${base-100}" width="${BW*5}" height="100" fill="url(#hatch)"/><defs><pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#ECF0F4"/><rect width="4" height="8" fill="#E2E7EC"/></pattern></defs>`;
+  for(let y=Y0;y<=Y1;y++){const [nn,sv]=D.yr[y]||[0,0];const x=(y-Y0)*BW+BW*.18,bw=BW*.64;const hn=Math.max(nn?2:0,nn/max*100),hs=Math.max(sv?2:0,sv/max*100);
+    s+=`<rect x="${x}" y="${base-hn}" width="${bw}" height="${hn}" rx="2" fill="${y===year?'#9AA3AC':'#C9D1D8'}"/><rect x="${x}" y="${base-hs}" width="${bw}" height="${hs}" fill="#0A0A0A"/>`;
+    if(y%5===0)s+=`<text x="${x+bw/2}" y="${base+22}" text-anchor="middle" font-size="12" fill="#5C6670">${y}</text>`;}
+  s+=`<line x1="0" x2="${w}" y1="${base}" y2="${base}" stroke="#0A0A0A" stroke-width="1.5"/>`;
+  const hx=(year-Y0)*BW+BW/2;
+  s+=`<g class="handle" tabindex="0" role="presentation"><line x1="${hx}" x2="${hx}" y1="${base-114}" y2="${base}" stroke="#0A0A0A" stroke-width="2"/><circle cx="${hx}" cy="${base}" r="11" fill="#ECF0F4" stroke="#0A0A0A" stroke-width="3"/></g>`;
+  s+=`<text x="4" y="${base-86}" font-size="12" fill="#5C6670">No heat data</text><text x="4" y="${base-70}" font-size="12" fill="#5C6670">before 1985</text>`;
+  svg.innerHTML=s;svg.setAttribute('aria-valuenow',year);svg.setAttribute('aria-valuetext',`${year}. ${(D.yr[year]||[0])[0]} sites surveyed.`);}
+function yearAt(clientX){const r=svg.getBoundingClientRect();return Y0+Math.floor((clientX-r.left)/BW);}
+let dragging=false;
+svg.addEventListener('pointerdown',e=>{dragging=true;svg.setPointerCapture(e.pointerId);stop();setYear(yearAt(e.clientX));});
+svg.addEventListener('pointermove',e=>{if(dragging)setYear(yearAt(e.clientX));});
+svg.addEventListener('pointerup',()=>dragging=false);
+svg.tabIndex=0;
+svg.addEventListener('keydown',e=>{const k={ArrowRight:1,ArrowUp:1,ArrowLeft:-1,ArrowDown:-1}[e.key];if(k){e.preventDefault();stop();setYear(year+k);}if(e.key==='Home')setYear(Y0);if(e.key==='End')setYear(Y1);});
+document.querySelectorAll('.jumps button').forEach(b=>b.onclick=()=>{stop();setYear(+b.dataset.y);});
+// ---------- play
+let timer=null;const icon=document.getElementById('playIcon'),playBtn=document.getElementById('play');
+function tick(){if(year>=Y1){stop();return;}setYear(year+1);timer=setTimeout(tick,1400/speed);}
+function start(){if(year>=Y1)setYear(1985,false);playing=true;icon.setAttribute('d','M4 3h3v10H4zM9 3h3v10H9z');playBtn.setAttribute('aria-label','Pause');timer=setTimeout(tick,500/speed);}
+function stop(){playing=false;clearTimeout(timer);icon.setAttribute('d','M5 3l8 5-8 5z');playBtn.setAttribute('aria-label','Play through the years');}
+playBtn.onclick=()=>playing?stop():start();
+document.querySelectorAll('.speed button').forEach(b=>b.onclick=()=>{speed=+b.dataset.s;document.querySelectorAll('.speed button').forEach(x=>x.classList.toggle('on',x===b));});
+// ---------- hover + click on dots
+const tip=document.getElementById('tip');
+function hideTip(){tip.classList.remove('on');hoverDot=null;}
+cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();const mx=(e.clientX-r.left)/scale,my=(e.clientY-r.top)/scale;const d=nearest(mx,my);
+  if(!d){hideTip();cv.style.cursor='default';return;}hoverDot=d;cv.style.cursor='pointer';const [x,y]=D.site_xy[d[0]];
+  tip.innerHTML=`<div class="n">${D.site_name[d[0]]||'Unnamed site'}</div><div class="m">${D.site_place[d[0]]?D.site_place[d[0]]+'. ':''}${d[1]}% bleached, worst survey of ${year}.</div>`;
+  const left=x*scale+14,flip=left+260>r.width;tip.style.left=(flip?x*scale-274:left)+'px';tip.style.top=(y*scale+12)+'px';tip.classList.add('on');});
+cv.addEventListener('pointerleave',hideTip);
+cv.addEventListener('click',()=>{if(hoverDot)toast(`Opens the event page for ${D.site_name[hoverDot[0]]||'this site'}, ${year}`);});
+// ---------- regions panel
+const panel=document.getElementById('panel'),regBtn=document.getElementById('regBtn'),rows=document.getElementById('rows');
+const maxRate=D.regions[0].rate;
+rows.innerHTML=D.regions.map((r,i)=>`<button class="row" data-i="${i}"><span style="color:#5C6670">${r.rank}</span><span><b>${r.n}</b><span class="bar" style="width:${r.rate/maxRate*100}%"></span></span><b style="text-align:right">${Math.round(r.rate)}%</b></button>`).join('');
+function openPanel(o){panel.classList.toggle('open',o);regBtn.setAttribute('aria-expanded',o);regBtn.style.visibility=o?'hidden':'visible';if(o)rows.querySelector('.row').focus();else{hoverRegion=null;regBtn.focus();}}
+regBtn.onclick=()=>openPanel(true);document.getElementById('close').onclick=()=>openPanel(false);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panel.classList.contains('open'))openPanel(false);});
+rows.addEventListener('pointerover',e=>{const b=e.target.closest('.row');hoverRegion=b?D.regions[+b.dataset.i]:null;});
+rows.addEventListener('focusin',e=>{const b=e.target.closest('.row');hoverRegion=b?D.regions[+b.dataset.i]:null;});
+rows.addEventListener('click',e=>{const b=e.target.closest('.row');if(b)toast(`Opens the region page: ${D.regions[+b.dataset.i].n}`);});
+// ---------- toast
+const tEl=document.getElementById('toast');let tt;function toast(m){tEl.textContent=m;tEl.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>tEl.classList.remove('on'),2200);}
+addEventListener('resize',resize);resize();t0=performance.now();requestAnimationFrame(frame);
+</script>
+</body>
+</html>

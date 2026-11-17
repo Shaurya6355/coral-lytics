@@ -1,0 +1,81 @@
+/* Story chapters. Sizes follow the 1440 mockups. */
+.chapter{position:relative;min-height:100vh;padding:calc(var(--nav-h) + 56px) var(--gutter) 56px;background:var(--white);color:var(--ink);overflow:hidden}
+.chapter.dark{background:var(--black);color:var(--ink-d)}
+.chapter .eyebrow{margin-bottom:12px}
+.ch-head{display:grid;grid-template-columns:1fr 420px;gap:80px;align-items:start;min-height:202px}
+.ch-head{padding-right:16px}
+.ch-head .lede{margin-top:36px;font-size:17px;line-height:1.5}
+.chap-reef .ch-head .h1{max-width:660px}
+.chap-risk .ch-head{min-height:162px}
+.ch-head .h1{max-width:720px}
+.ch-map{position:relative;margin:0 calc(-1 * var(--gutter))}
+.ch-foot{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:14px}
+.legend-row{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center;font-size:13px;font-weight:500;color:var(--muted)}
+.dark .legend-row{color:var(--muted-d)}
+.legend-row b{color:var(--ink);font-weight:600}
+.dark .legend-row b{color:#fff}
+.legend-row .dot{margin-right:7px;vertical-align:-2px}
+.dark .legend-row .dot.w{border:0}
+.dot.reef{background:var(--reef)}
+
+/* Bleaching */
+.chap-bleaching{padding-right:0}
+.bl-left{width:min(640px,calc(55.5vw - var(--gutter) - 40px));position:relative;z-index:1}
+.bl-left .lede{margin-top:60px;max-width:600px}
+.bl-slide{margin-top:66px;width:100%}
+.bl-slide .ba-stage{height:260px}
+.bl-slide .ba-cap{margin-top:0}
+.bl-left .btn{margin-top:40px}
+.bl-map{position:absolute;left:55.5%;right:0;top:var(--nav-h);bottom:0}
+.bl-card{position:absolute;left:32px;top:38px;z-index:2;width:290px;pointer-events:none}
+.bl-card h2{font-size:22px;line-height:1.25;font-weight:650;letter-spacing:-.015em}
+.bl-card p{margin-top:6px;font-size:15px;line-height:1.45;color:var(--muted-d)}
+.bl-legend{position:absolute;left:32px;bottom:32px;z-index:2}
+.bl-legend.legend-row{gap:8px 20px}
+
+/* Heat */
+.ch-heat{display:grid;grid-template-columns:1fr 736px;gap:0;align-items:stretch}
+.heat-left{display:flex;flex-direction:column;justify-content:space-between;padding-right:48px}
+.heat-left .h1{max-width:470px}
+.heat-left .lede{margin-top:75px;max-width:480px}
+.heat-left .btn{align-self:flex-start;margin-top:48px}
+.heat-chart svg{display:block;width:100%;overflow:visible}
+.heat-chart text{font-family:inherit}
+.heat-chart .src b{font-weight:600}
+.hbar{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0);transition:transform var(--t-slow) var(--ease-out);transition-delay:calc(var(--i) * 80ms)}
+.hval,.hcnt{opacity:0;transition:opacity var(--t-slow) var(--ease-out);transition-delay:calc(var(--i) * 80ms + 200ms)}
+.heat-chart.in .hbar{transform:scaleY(1)}
+.heat-chart.in .hval,.heat-chart.in .hcnt{opacity:1}
+.heat-chart.still .hbar,.heat-chart.still .hval,.heat-chart.still .hcnt{transition:none}
+@media (prefers-reduced-motion:reduce){.hbar{transform:none;transition:none}.hval,.hcnt{opacity:1;transition:none}}
+
+/* Risk */
+.rk-map{position:relative}
+.rk-label{position:absolute;z-index:2;font-size:13px;line-height:18px;color:#D5DADF;pointer-events:none;white-space:nowrap}
+.rk-label b{color:#fff;font-weight:600}
+.rk-label.two{white-space:normal;width:130px}
+.rk-legend{margin-top:12px}
+.rk-foot{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:24px;align-items:start;margin-top:12px}
+.rk-item{display:block;text-decoration:none;color:inherit;border-top:1px solid var(--hair-d);padding-top:14px;transition:opacity var(--t-fast) ease-out}
+.rk-item:hover{opacity:.82}
+.rk-item:hover .rk-name{text-decoration:underline}
+.rk-item .pct{font-size:36px;line-height:1.1;font-weight:650;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.rk-item .rk-name{margin-top:8px;font-size:14px;line-height:1.35;font-weight:600}
+.rk-item .rk-n{margin-top:4px;font-size:13px;color:var(--muted-d)}
+.rk-foot .btn{margin-top:14px}
+
+@media (max-width:1279px){.ch-head{grid-template-columns:1fr 360px;gap:48px}.ch-heat{grid-template-columns:1fr 600px}.heat-left{padding-right:32px}}
+@media (max-width:1023px){
+  .ch-head{grid-template-columns:1fr;gap:0}.ch-head .lede{margin-top:20px}
+  .ch-heat{grid-template-columns:1fr}.heat-left{padding-right:0;margin-bottom:32px}.heat-left .btn{margin-top:32px;order:3}
+  .chap-bleaching .bl-left{width:100%}.bl-map{position:relative;left:auto;right:auto;top:auto;bottom:auto;margin:32px calc(-1 * var(--gutter)) 0;height:560px}
+  .rk-foot{grid-template-columns:repeat(2,minmax(0,1fr))}.rk-foot .btn{grid-column:1/-1;justify-self:start}
+}
+
+/* Headline sizes differ by chapter, as on the mockups (section 5: 64/66, 56/58, 52/54). */
+.chap-bleaching .h1{font-size:56px;line-height:58px}
+.chap-heat .h1,.chap-risk .h1{font-size:52px;line-height:54px}
+@media (max-width:1359px){.chap-reef .h1{font-size:56px;line-height:58px}.chap-bleaching .h1{font-size:52px;line-height:54px}}
+@media (max-width:1099px){.chap-reef .h1{font-size:52px;line-height:54px}.chap-heat .h1,.chap-risk .h1{font-size:48px;line-height:50px}}
+.chap-bleaching .h1{max-width:610px}
+.chap-risk .ch-head .h1{max-width:560px}
