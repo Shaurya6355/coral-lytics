@@ -1,7 +1,7 @@
 // Story: four chapters in one scroll. See BUILD_HANDOVER.md section 8.2.
 import './story.css';
 import { scaleLinear } from 'd3-scale';
-import { data, displayName, shortName, siteCover, bleachColor } from '../data.js';
+import { data, displayName, shortName, siteCover, bleachColor, exploreHref } from '../data.js';
 import { MapView } from '../map/MapView.js';
 import { drawReef, drawParallels } from '../map/projection.js';
 import { createSlider } from '../ui/slider.js';
@@ -74,21 +74,21 @@ function reefChapter(story, cleanups) {
     </div>
     <div class="ch-map reveal"></div>
     <div class="ch-foot reveal">
-      <div class="legend-row"><span><i class="dot reef"></i>Coral reef</span><span><i class="dot c0"></i>Survey site. Darker means more living coral.</span></div>
+      <div class="legend-row"><span><i class="dot reef"></i>Coral reef</span><span><i class="dot sv"></i>Survey site. Darker means more living coral.</span></div>
       <a class="btn" href="#/bleaching">Next: what bleaching is ${ARROW}</a>
     </div>`, 'Reef');
   const sites = data.surveys.sites, cover = siteCover();
   const view = new MapView(s.querySelector('.ch-map'), {
     kind: 'world', landRes: '110',
-    label: `World map cropped to the tropics. Coral reefs sit in a thin belt of warm water. ${num(sites.id.length)} survey sites are shown as teal dots. Darker dots mean more living coral.`,
+    label: `World map cropped to the tropics. Coral reefs sit in a thin belt of warm water. ${num(sites.id.length)} survey sites are shown as black dots. Darker dots mean more living coral.`,
     draw(g, v) {
       v.blit(g, 'base', gg => {
         const k = v.w / 1440;
-        gg.fillStyle = '#2F3640'; v.drawLand(gg, '#2F3640', '110');
-        drawParallels(gg, v.proj, v.w, '#C9D1D8', '#C9D1D8');
-        drawReef(gg, v.proj, data.reefLonLat, '#7CC3B6', Math.max(.9, k * 1.1));
+        v.drawLand(gg, '#E3E6EA', '110');
+        drawParallels(gg, v.proj, v.w, '#D2D8DE', '#C9D1D8');
+        drawReef(gg, v.proj, data.reefLonLat, '#8FD0C3', Math.max(.9, k * 1.1));
         const order = Array.from({ length: sites.id.length }, (_, i) => i).map(i => [i, isNaN(cover[i]) ? .3 : .3 + .7 * Math.min(1, cover[i] / 40)]).sort((a, b) => a[1] - b[1]);
-        gg.fillStyle = '#0E8C7B';
+        gg.fillStyle = '#0A0A0A';
         for (const [i, a] of order) { const p = v.project(sites.lon[i], sites.lat[i]); if (!p) continue; gg.globalAlpha = a; gg.beginPath(); gg.arc(p[0], p[1], 2.1 * k + .3, 0, 7); gg.fill(); }
         gg.globalAlpha = 1;
       });
@@ -125,13 +125,13 @@ function bleachingChapter(story, cleanups) {
   const pts = data.explore.years['2005'].filter(([si]) => sites.lon[si] >= BOX[0] && sites.lon[si] <= BOX[2] && sites.lat[si] >= BOX[1] && sites.lat[si] <= BOX[3]).sort((a, b) => a[1] - b[1]);
   const view = new MapView(s.querySelector('.bl-map'), {
     kind: 'box', bbox: BOX, landRes: '50',
-    label: `Map of the Caribbean in 2005. ${pctWhole(c.severe_rate)} of ${num(c.surveys)} surveys found severe bleaching. Survey sites are dots from teal for no bleaching to white for 50% or more.`,
+    label: `Map of the Caribbean in 2005. ${pctWhole(c.severe_rate)} of ${num(c.surveys)} surveys found severe bleaching. Survey sites are dots from light grey for no bleaching to black for 50% or more.`,
     draw(g, v) {
       v.blit(g, 'base', gg => {
-        v.drawLand(gg, '#2A2E33', '50');
-        drawReef(gg, v.proj, data.reefLonLat, '#1F6F64', 1.5);
+        v.drawLand(gg, '#E3E6EA', '50');
+        drawReef(gg, v.proj, data.reefLonLat, '#8FD0C3', 1.5);
       });
-      for (const [si, pb] of pts) { const p = v.project(sites.lon[si], sites.lat[si]); if (!p) continue; g.fillStyle = bleachColor(pb); g.beginPath(); g.arc(p[0], p[1], 3.2, 0, 7); g.fill(); }
+      for (const [si, pb] of pts) { const p = v.project(sites.lon[si], sites.lat[si]); if (!p) continue; g.fillStyle = bleachColor(pb); g.beginPath(); g.arc(p[0], p[1], 3.4, 0, 7); g.fill(); g.lineWidth = 1.5; g.strokeStyle = '#fff'; g.stroke(); }
     },
   });
   cleanups.push(() => view.destroy());
@@ -152,12 +152,12 @@ function heatChapter(story, cleanups) {
         <h2>Severe coral bleaching by heat stress level</h2>
         <p class="sub">Share of reef surveys where half or more of the coral had bleached, grouped by degree heating weeks at the time of the survey.</p>
         <div class="heat-svg"></div>
-        <div class="src"><b>Data source:</b> van Woesik and Burkepile, global coral bleaching database (2022). ${num(hb.surveys_with_heat)} surveys with a heat stress reading, ${t.first_year} to ${t.last_year}.</div>
+        <div class="src"><b>Data source:</b> van Woesik and Kratochwill (2022), Global Coral-Bleaching Database, Scientific Data 9:20. Heat stress: CoRTAD v6 (TSA_DHW). ${num(hb.surveys_with_heat)} surveys with a heat stress reading, ${t.first_year} to ${t.last_year}.</div>
         <div class="src" style="border:0;margin-top:12px;padding-top:0">CC BY. Coral-lytics, DATA 511.</div>
       </div>
     </div>`, 'Heat');
   const chart = s.querySelector('#heat-chart'), host = chart.querySelector('.heat-svg');
-  const FILL = ['#C9D1D8', 'var(--h1)', 'var(--h2)', 'var(--h3)', 'var(--h4)'];
+  const FILL = ['#D9DEE3', '#B9C0C7', '#9AA3AC', '#5C6670', '#0A0A0A'];
   let revealed = false;
   const render = () => {
     const W = Math.max(320, Math.round(host.clientWidth || 736)), H = 540;
@@ -196,7 +196,7 @@ const LABELS = [ // dx, dy from the dot, alignment
   { dx: 34, dy: 8, align: 'l' }, { dx: -16, dy: 0, align: 'r' }, { dx: -72, dy: 52, align: 'l', two: true },
   { dx: -52, dy: 0, align: 'r', two: true }, { dx: 40, dy: -28, align: 'l' },
 ];
-const riskColor = r => r < 3 ? '#0E8C7B' : r < 8 ? '#5FB8A8' : r < 15 ? '#B7E0D7' : '#FFFFFF';
+const riskColor = r => r < 3 ? '#D9DEE3' : r < 8 ? '#9AA3AC' : r < 15 ? '#5C6670' : '#0A0A0A';
 function riskChapter(story, cleanups) {
   const R = data.regions.ranked, top = story.top_regions;
   const s = chapterEl('risk', 4, 'dark', `
@@ -207,8 +207,8 @@ function riskChapter(story, cleanups) {
     <div class="ch-map rk-map reveal"></div>
     <div class="legend-row rk-legend reveal"><b>Surveys that found severe bleaching</b><span><i class="dot c0"></i>Under 3%</span><span><i class="dot c1"></i>3 to 8%</span><span><i class="dot c2"></i>8 to 15%</span><span><i class="dot c3"></i>15% or more</span></div>
     <div class="rk-foot reveal">
-      ${top.map(t => { const r = R.find(x => x.rank === t.rank); return `<a class="rk-item" href="#/region/${r.slug}"><div class="pct">${pctWhole(t.severe_rate)}</div><div class="rk-name">${t.rank}. ${displayName(t.name)}</div><div class="rk-n">${num(t.surveys)} surveys</div></a>`; }).join('')}
-      <a class="btn on-dark" href="#/explore/2005">Explore the map ${ARROW}</a>
+      ${top.map(t => { const r = R.find(x => x.rank === t.rank); return `<a class="rk-item" href="${exploreHref(r)}"><div class="pct">${pctWhole(t.severe_rate)}</div><div class="rk-name">${t.rank}. ${displayName(t.name)}</div><div class="rk-n">${num(t.surveys)} surveys</div></a>`; }).join('')}
+      <a class="btn on-dark" href="${exploreHref(R.find(x => x.rank === 1))}">Explore the map ${ARROW}</a>
     </div>`, 'Risk');
   const mapHost = s.querySelector('.rk-map');
   const tip = createTooltip(mapHost);
@@ -217,7 +217,7 @@ function riskChapter(story, cleanups) {
   const labelEls = top.map((t, i) => { const el = document.createElement('div'); el.className = 'rk-label' + (LABELS[i].two ? ' two' : ''); el.innerHTML = `${shortName(t.name)} <b>${pctWhole(t.severe_rate)}</b>`; el.style.textAlign = LABELS[i].align === 'r' ? 'right' : 'left'; mapHost.append(el); return el; });
   const view = new MapView(mapHost, {
     kind: 'world', landRes: '110', maxDist: 14,
-    label: `World map of ${story.ranked_count} ranked regions. Each dot is a region, coloured by the share of surveys that found severe bleaching. The top five are labelled.`,
+    label: `World map of ${story.ranked_count} ranked regions. Each dot is a region, shaded from light grey to black by the share of surveys that found severe bleaching. The top five are labelled.`,
     onResize(v) {
       v.setPoints(regs.map(r => { const p = v.project(r.center[0], r.center[1]); return p && { x: p[0], y: p[1], r }; }).filter(Boolean));
       top.forEach((t, i) => {
@@ -232,17 +232,17 @@ function riskChapter(story, cleanups) {
       if (!p) { tip.hide(); return; }
       tip.show(p.x, p.y, `<div class="n">${displayName(p.r.name)}</div><div class="m">${p.r.severe_rate.toFixed(1)}% of ${num(p.r.surveys)} surveys found severe bleaching. Click to open.</div>`);
     },
-    onClick(p) { location.hash = `#/region/${p.r.slug}`; },
+    onClick(p) { location.hash = exploreHref(p.r); },
     draw(g, v) {
       v.blit(g, 'base', gg => {
-        v.drawLand(gg, '#2A2E33', '110');
-        drawParallels(gg, v.proj, v.w, 'rgba(255,255,255,.14)', 'rgba(255,255,255,.2)');
-        gg.fillStyle = 'rgba(31,111,100,.55)';
+        v.drawLand(gg, '#E3E6EA', '110');
+        drawParallels(gg, v.proj, v.w, '#D2D8DE', '#C9D1D8');
+        gg.fillStyle = 'rgba(143,208,195,.8)';
         for (let i = 0; i < sites.id.length; i++) { const p = v.project(sites.lon[i], sites.lat[i]); if (p) gg.fillRect(p[0] - .6, p[1] - .6, 1.2, 1.2); }
       });
       const rad = 8 * Math.max(.7, v.w / 1440);
-      for (const p of v.points) { g.fillStyle = riskColor(p.r.severe_rate); g.beginPath(); g.arc(p.x, p.y, rad, 0, 7); g.fill(); }
-      if (v.hover) { g.lineWidth = 2; g.strokeStyle = '#F0553F'; g.beginPath(); g.arc(v.hover.x, v.hover.y, rad + 3, 0, 7); g.stroke(); }
+      for (const p of v.points) { g.fillStyle = riskColor(p.r.severe_rate); g.beginPath(); g.arc(p.x, p.y, rad, 0, 7); g.fill(); g.lineWidth = 1.5; g.strokeStyle = '#fff'; g.stroke(); }
+      if (v.hover) { g.lineWidth = 2; g.strokeStyle = '#0A0A0A'; g.beginPath(); g.arc(v.hover.x, v.hover.y, rad + 3, 0, 7); g.stroke(); }
     },
   });
   cleanups.push(() => view.destroy());

@@ -6,21 +6,17 @@
   /* ink on black */
   --ink-d:#FFFFFF; --muted-d:#A3ABB3; --hair-d:#2E3338;
   /* maps */
-  --land:#2F3640; --land-d:#2A2E33; --reef:#7CC3B6; --reef-d:#1F6F64;
-  /* coral bleaching scale: teal drains to white */
-  --c0:#0E8C7B;  /* no bleaching */
-  --c1:#5FB8A8;  /* under 20% */
-  --c2:#B7E0D7;  /* 20 to 49% */
-  --c3:#FFFFFF;  /* 50% or more: severe. On white grounds add a 0.7px #0A0A0A edge */
-  /* heat scale (degree heating weeks) */
-  --h1:#FFD84D;  /* 1 to 4, watch */
-  --h2:#FF9F1C;  /* 4 to 8, bleaching likely */
-  --h3:#F0553F;  /* 8 to 12, severe */
-  --h4:#B3122D;  /* 12 or more */
-  --heat-text:#C2412D; /* heat chart titles on white */
+  --land:#E3E6EA; --coast:#AEB5BD; --reef:#8FD0C3;
+  /* survey dots: % of coral bleached (mean). Grey to black. 1.5px white halo on every dot. */
+  --d0:#D9DEE3;  /* none */
+  --d1:#9AA3AC;  /* under 20% */
+  --d2:#5C6670;  /* 20 to 49% */
+  --d3:#0A0A0A;  /* 50% or more (severe) */
+  /* temperature anomaly, cmocean "balance", -3 to +3 degrees C in 0.5 steps (13 stops, white = 0). Used in JS as BAL. */
+  --t:#181C43,#293888,#0C5EBE,#3888BA,#75AABE,#B6C9CF,#F1ECEB,#DFBBB0,#D08B73,#BF573A,#A52125,#730E27,#3C0912;
   /* accents */
   --teal-label:#0E8C7B; --teal-label-d:#3CC4AE; /* chapter eyebrows */
-  --focus:#0A0A0A; --hover-ring:#F0553F;
+  --focus:#0A0A0A;
   /* glass panels on maps */
   --glass:rgba(255,255,255,.94); --glass-border:#E1E5EA; --shadow:0 6px 24px rgba(10,10,10,.10);
   /* shape */

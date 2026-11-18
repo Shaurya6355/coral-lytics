@@ -7,8 +7,7 @@ import { showLoading } from './ui/loading.js';
 import { footer } from './ui/footer.js';
 import * as story from './pages/story.js';
 import * as explore from './pages/explore.js';
-import * as region from './pages/region.js';
-import * as event from './pages/event.js';
+import * as sources from './pages/sources.js';
 import * as gallery from './pages/gallery.js';
 import * as coral from './pages/coral.js';
 
@@ -27,12 +26,17 @@ function match(hash) {
   if (p.length === 0) return { page: story, params: { chapter: null } };
   if (CHAPTERS.includes(p[0]) && p.length === 1) return { page: story, params: { chapter: p[0] } };
   if (p[0] === 'explore') {
-    if (p[1] === 'regions') return { page: explore, params: { panel: true } };
-    if (/^\d{4}$/.test(p[1] || '')) return { page: explore, params: { year: +p[1] } };
-    return { page: explore, params: {} };
+    const params = {};
+    if (p[1] && !/^\d{4}$/.test(p[1]) && p[1] !== 'regions') { params.slug = p[1]; params.ym = p[2] || null; if (p[3] === 'survey' && p[4] && p[5]) { params.siteId = +p[4]; params.date = +p[5]; } }
+    return { page: explore, params };
   }
-  if (p[0] === 'region' && p[1]) return { page: region, params: { slug: p[1], month: p[2] || null } };
-  if (p[0] === 'event' && p[1] && p[2]) return { page: event, params: { siteId: +p[1], date: +p[2] } };
+  if (p[0] === 'sources') return { page: sources, params: {} };
+  // old v1 links keep working
+  if (p[0] === 'region' && p[1]) return { redirect: `#/explore/${p[1]}${p[2] ? '/' + p[2] : ''}` };
+  if (p[0] === 'event' && p[1] && p[2]) {
+    const si = data.siteIndexById.get(+p[1]), r = si != null ? data.regionById.get(data.surveys.sites.region[si]) : null, d = p[2];
+    return { redirect: r ? `#/explore/${r.slug}/${d.slice(0, 4)}-${d.slice(4, 6)}/survey/${p[1]}/${d}` : '#/explore' };
+  }
   if (p[0] === 'gallery') return p[1] ? { page: coral, params: { slug: p[1] } } : { page: gallery, params: {} };
   return { page: story, params: { chapter: null } };
 }
@@ -43,13 +47,16 @@ const ctx = { nav, main, data: null, navigate: h => { location.hash = h; }, toas
 function setChrome(page) {
   const g = page.ground || 'light';
   document.body.dataset.pageGround = g;
-  document.body.dataset.compact = page.compact ? '1' : '0';
+  document.body.dataset.compact = page.compact === true ? '1' : (page.compact || '0');
+  nav.setRight(page.navRight || 'gallery');
   nav.setGround(g);
   nav.setActive(page.navKey || null);
 }
 
 function route() {
-  const { page, params } = match(location.hash);
+  const m = match(location.hash);
+  if (m.redirect) { history.replaceState(null, '', m.redirect); route(); return; }
+  const { page, params } = m;
   if (current && current.page === page && current.inst.update) {
     current.inst.update(params);
     return;

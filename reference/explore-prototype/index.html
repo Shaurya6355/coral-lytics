@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coral-lytics: Explore an eco-region (prototype v2)</title>
+<link rel="stylesheet" href="./maplibre-gl.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0A0A0A;--mut:#5C6670;--hair:#D9DEE3;--band:#ECF0F4;--land:#E3E6EA;--landline:#C3C9CF;--reef:#8FD0C3;
+--d0:#D9DEE3;--d1:#9AA3AC;--d2:#5C6670;--d3:#0A0A0A;--glass:rgba(255,255,255,.96);--shadow:0 6px 24px rgba(10,10,10,.10);--ease:cubic-bezier(.22,1,.36,1)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#fff;color:var(--ink);font-family:'Inter Tight','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+nav{height:56px;display:flex;align-items:center;gap:48px;padding:0 24px;border-bottom:1px solid var(--hair)}
+nav .logo{font-size:19px;font-weight:700;letter-spacing:-.02em}
+nav .links{display:flex;gap:28px;margin-right:auto}
+nav a{font-size:14px;font-weight:500;color:var(--mut);text-decoration:none;padding:6px 0;border-bottom:2px solid transparent}
+nav a.on{color:var(--ink);font-weight:600;border-color:var(--ink)}
+.app{display:grid;grid-template-columns:320px 1fr;grid-template-rows:1fr auto;height:calc(100vh - 56px);min-height:760px}
+aside.side{grid-row:1/3;border-right:1px solid var(--hair);overflow:auto;padding:16px 18px 24px}
+.lbl{font-size:12px;font-weight:600;color:var(--mut);margin:0 0 6px}
+.search{position:relative}
+.search input{width:100%;height:44px;border:1px solid var(--hair);border-radius:10px;padding:0 12px 0 36px;font-size:15px;background:#fff}
+.search input:focus{border-color:var(--ink);outline:none;box-shadow:0 0 0 3px rgba(10,10,10,.08)}
+.search svg{position:absolute;left:12px;top:14px;color:var(--mut)}
+#results{position:absolute;z-index:20;top:48px;left:0;right:0;max-height:420px;overflow:auto;background:#fff;border:1px solid var(--hair);border-radius:12px;box-shadow:var(--shadow);display:none;padding:6px 0}
+#results.open{display:block}
+#results .grp{font-size:11px;font-weight:600;color:var(--mut);padding:8px 12px 4px;text-transform:none}
+#results .opt{display:flex;justify-content:space-between;gap:8px;padding:8px 12px;font-size:14px;cursor:pointer}
+#results .opt[aria-selected=true],#results .opt:hover{background:var(--band)}
+#results .opt small{color:var(--mut);white-space:nowrap}
+.rname{margin:18px 0 4px;font-size:22px;line-height:1.15;font-weight:650;letter-spacing:-.02em}
+.rmeta{font-size:13px;color:var(--mut);line-height:1.45}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 6px}
+.stat{background:var(--band);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-size:20px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--mut)}
+hr{border:0;border-top:1px solid var(--hair);margin:18px 0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px;font-size:14px}
+.switch{width:40px;height:24px;border-radius:999px;border:0;background:var(--hair);position:relative;cursor:pointer;flex:none;transition:background .15s}
+.switch::after{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .2s var(--ease)}
+.switch[aria-checked=true]{background:var(--ink)}.switch[aria-checked=true]::after{transform:translateX(16px)}
+.ramp{height:10px;border-radius:3px;margin:6px 0 4px}
+.rampl{display:flex;justify-content:space-between;font-size:11px;color:var(--mut)}
+.dots{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:12px;color:var(--mut);margin-top:6px}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-right:6px;border:1px solid #fff;box-shadow:0 0 0 1px var(--d1)}
+.src{display:grid;grid-template-columns:1fr auto;gap:2px 8px;font-size:13px;margin-top:6px}
+.src .bar{grid-column:1/3;height:4px;background:var(--hair);border-radius:2px;margin-bottom:6px}.src .bar i{display:block;height:4px;border-radius:2px;background:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--hair);background:#fff;font-size:13px;font-weight:600;cursor:pointer}
+.btn:hover{border-color:var(--ink)}.btn.solid{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mapwrap{position:relative;min-height:0}
+#map{position:absolute;inset:0}
+.mctl{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:6px;z-index:5}
+.mctl button{width:40px;height:40px;border-radius:10px;border:1px solid var(--hair);background:#fff;font-size:18px;cursor:pointer;box-shadow:var(--shadow)}
+.mctl .txt{width:auto;padding:0 12px;font-size:12px;font-weight:600}
+#status{position:absolute;left:14px;top:14px;z-index:5;background:var(--glass);border:1px solid var(--hair);box-shadow:var(--shadow);border-radius:999px;padding:9px 16px;font-size:13px;font-weight:500;transition:background .4s}
+#status.flash{background:#FFF7D6}
+#tip{position:absolute;z-index:6;pointer-events:none;background:var(--glass);border:1px solid var(--hair);box-shadow:var(--shadow);border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.45;max-width:280px;opacity:0;transition:opacity .12s}
+#tip b{font-size:13px}
+#tip.on{opacity:1}
+#tempnote{position:absolute;left:14px;bottom:14px;z-index:5;font-size:12px;color:var(--mut);background:#fff;border:1px solid var(--hair);border-radius:999px;padding:6px 12px;display:none}
+.time{grid-column:2;border-top:1px solid var(--hair);background:var(--band);padding:10px 20px 12px}
+.thead{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.thead .now{font-size:24px;font-weight:650;letter-spacing:-.02em;min-width:170px;font-variant-numeric:tabular-nums}
+.thead .play{width:40px;height:40px;border-radius:50%;border:0;background:var(--ink);color:#fff;display:grid;place-items:center;cursor:pointer}
+.thead .keys{margin-left:auto;font-size:12px;color:var(--mut);white-space:nowrap}
+kbd{font:600 11px/1 'Inter Tight',sans-serif;border:1px solid var(--d1);border-bottom-width:2px;border-radius:4px;padding:2px 5px;background:#fff;color:var(--ink)}
+#tl{display:block;width:100%;height:132px;touch-action:none;cursor:pointer}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:380px;background:#fff;border-left:1px solid var(--hair);box-shadow:-8px 0 30px rgba(10,10,10,.08);z-index:8;transform:translateX(100%);transition:transform .28s var(--ease);overflow:auto;padding:18px 20px 28px}
+.drawer.open{transform:none}
+.drawer h2{margin:6px 0 2px;font-size:22px;font-weight:650;letter-spacing:-.02em}
+.drawer .x{position:absolute;right:10px;top:10px;width:40px;height:40px;border:0;background:none;font-size:20px;cursor:pointer}
+.big{font-size:52px;font-weight:650;letter-spacing:-.03em;line-height:1;margin:14px 0 4px}
+.cite{font-size:12px;line-height:1.5;color:var(--mut);background:var(--band);border-radius:10px;padding:10px 12px;margin-top:8px}
+.cite a{color:var(--ink)}
+table.sv{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+table.sv td,table.sv th{padding:5px 4px;border-bottom:1px solid var(--hair);text-align:left}
+table.sv th{color:var(--mut);font-weight:600}
+.modal{position:fixed;inset:0;background:rgba(10,10,10,.35);display:none;align-items:center;justify-content:center;z-index:50}
+.modal.open{display:flex}
+.modal .card{background:#fff;border-radius:16px;max-width:720px;max-height:80vh;overflow:auto;padding:22px 26px;font-size:13px;line-height:1.5}
+.modal h2{margin:0 0 10px;font-size:22px;font-weight:650}
+.modal li{margin-bottom:10px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<nav aria-label="Chapters"><span class="logo">Coral-lytics</span><div class="links"><a href="#">Reef</a><a href="#">Bleaching</a><a href="#">Heat</a><a href="#">Risk</a><a href="#" class="on">Explore</a></div><a href="#" id="srcLink">Sources and methods</a></nav>
+<h1 class="sr">Explore coral bleaching surveys and ocean temperature by eco-region</h1>
+<div class="app">
+ <aside class="side" aria-label="Eco-region and layers">
+  <p class="lbl" id="slbl">Eco-region</p>
+  <div class="search" role="combobox" aria-expanded="false" aria-owns="results" aria-haspopup="listbox">
+   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+   <input id="q" type="text" placeholder="Search 114 eco-regions or countries" aria-labelledby="slbl" aria-autocomplete="list" aria-controls="results" autocomplete="off">
+   <div id="results" role="listbox" aria-label="Eco-regions"></div>
+  </div>
+  <div id="summary" aria-live="polite"></div>
+  <hr>
+  <p class="lbl">Layers</p>
+  <div class="row"><span>Temperature vs normal</span><button class="switch" id="tTemp" role="switch" aria-checked="true" aria-label="Temperature layer"></button></div>
+  <div class="ramp" id="ramp"></div><div class="rampl"><span>-3 °C cooler</span><span>normal</span><span>+3 °C warmer</span></div>
+  <div class="row" style="margin-top:8px"><span>Mapped coral reefs</span><button class="switch" id="tReef" role="switch" aria-checked="true" aria-label="Reef layer"></button></div>
+  <p class="lbl" style="margin-top:14px">Coral bleached (survey mean)</p>
+  <div class="dots"><span><i class="dot" style="background:var(--d0)"></i>None</span><span><i class="dot" style="background:var(--d1)"></i>Under 20%</span><span><i class="dot" style="background:var(--d2)"></i>20 to 49%</span><span><i class="dot" style="background:var(--d3)"></i>50% or more</span><span><i class="dot" style="background:#fff;box-shadow:0 0 0 1.5px var(--d1)"></i>Surveyed other months</span><span><i class="dot" style="background:var(--d2);box-shadow:0 0 0 1px #fff,0 0 0 3px var(--d2)"></i>Several surveys: click</span></div>
+  <hr>
+  <p class="lbl">Survey sources in this region</p>
+  <div id="sources"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" id="dl">Download region data (CSV)</button><button class="btn" id="cites">Citations</button></div>
+ </aside>
+ <div class="mapwrap">
+  <div id="map" role="region" aria-label="Map. Scroll or pinch to zoom, drag to pan."></div>
+  <div id="status" role="status"></div>
+  <div class="mctl"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button class="txt" id="zreg" title="Z">Region</button><button class="txt" id="zworld" title="W">World</button></div>
+  <div id="tempnote">Temperature for this month loads live from NOAA in the built site.</div>
+  <div id="tip"></div>
+  <aside class="drawer" id="drawer" aria-label="Survey details"><button class="x" id="dx" aria-label="Close details">×</button><div id="dbody"></div></aside>
+ </div>
+ <section class="time" aria-label="Timeline">
+  <div class="thead"><button class="play" id="play" aria-label="Play month by month"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path id="pi" d="M5 3l8 5-8 5z"/></svg></button><div class="now" id="now"></div>
+   <button class="btn" id="prev" title="[">◀ Prev. date</button><button class="btn" id="next" title="]">Next date ▶</button>
+   <span class="keys"><kbd>←</kbd><kbd>→</kbd> month &nbsp;<kbd>⇧</kbd>+<kbd>←</kbd><kbd>→</kbd> year &nbsp;<kbd>[</kbd><kbd>]</kbd> survey dates &nbsp;<kbd>T</kbd> temperature &nbsp;<kbd>Z</kbd> region &nbsp;<kbd>/</kbd> search</span></div>
+  <svg id="tl" role="slider" tabindex="0" aria-label="Month"></svg>
+ </section>
+</div>
+<div class="modal" id="modal" role="dialog" aria-label="Sources and citations"><div class="card" id="mcard"></div></div>
+<script src="./maplibre-gl-csp.js"></script>
+<script>
+maplibregl.setWorkerUrl('./maplibre-gl-csp-worker.js');
+const BAL=["#181C43","#293888","#0C5EBE","#3888BA","#75AABE","#B6C9CF","#F1ECEB","#DFBBB0","#D08B73","#BF573A","#A52125","#730E27","#3C0912"]; // cmocean balance, -3..+3 C in 0.5 C steps
+const balance=v=>BAL[Math.max(0,Math.min(12,Math.round(v*2)+6))];
+const DOT=p=>p==null?'#FFFFFF':p>=50?'#0A0A0A':p>=20?'#5C6670':p>0?'#9AA3AC':'#D9DEE3';
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const $=s=>document.querySelector(s);
+document.getElementById('ramp').style.background=`linear-gradient(90deg,${BAL.join(',')})`;
+let S,R,SRC,SSTA,EVENT,map,ready=false;
+let reg=null, ym=null, months=[], tempOn=true, spider=null, playT=null;
+const st={};
+Promise.all(['surveys','regions','sources','land','borders','reef','region_hispaniola_2005_ssta'].map(f=>fetch(`./data/${f}.json`).then(r=>r.json()))).then(([s,r,src,land,borders,reef,ssta])=>{
+ S=s;R=r.regions;SRC=src;SSTA=ssta;index();initMap(land,borders,reef);initSearch();bindKeys();
+});
+// ---------- data index
+function index(){const v=S.surveys,n=v.site.length;st.bySite=new Map();st.byReg=new Map();
+ for(let i=0;i<n;i++){const si=v.site[i];(st.bySite.get(si)||st.bySite.set(si,[]).get(si)).push(i);const ri=S.sites.region[si];(st.byReg.get(ri)||st.byReg.set(ri,[]).get(ri)).push(i);}
+ st.srcByCode=Object.fromEntries(SRC.survey_sources.map(x=>[x.code,x]));}
+const ymOf=d=>Math.floor(d/100), fmtYM=k=>`${MON[k%100-1]} ${Math.floor(k/100)}`, fmtD=d=>`${d%100} ${MON[Math.floor(d/100)%100-1]} ${Math.floor(d/10000)}`;
+// ---------- map
+function initMap(land,borders,reef){
+ const cells=reef.cells,step=reef.step,pts=[];for(let i=0;i<cells.length;i+=2)pts.push({type:'Feature',geometry:{type:'Point',coordinates:[(cells[i]+.5)*step,(cells[i+1]+.5)*step]}});
+ map=new maplibregl.Map({container:'map',attributionControl:false,dragRotate:false,pitchWithRotate:false,renderWorldCopies:true,maxZoom:13,
+  style:{version:8,sources:{land:{type:'geojson',data:land},borders:{type:'geojson',data:borders},reef:{type:'geojson',data:{type:'FeatureCollection',features:pts}},
+   temp:{type:'geojson',data:empty()},ctx:{type:'geojson',data:empty()},cur:{type:'geojson',data:empty()},spider:{type:'geojson',data:empty()},legs:{type:'geojson',data:empty()},box:{type:'geojson',data:empty()}},
+   layers:[{id:'bg',type:'background',paint:{'background-color':'#FFFFFF'}},
+    {id:'temp',type:'fill',source:'temp',paint:{'fill-color':['get','c'],'fill-opacity':.85,'fill-antialias':false}},
+    {id:'land',type:'fill',source:'land',paint:{'fill-color':'#E3E6EA'}},
+    {id:'coast',type:'line',source:'land',paint:{'line-color':'#AEB5BD','line-width':.7}},
+    {id:'borders',type:'line',source:'borders',paint:{'line-color':'#C3C9CF','line-width':.6,'line-dasharray':[2,2]}},
+    {id:'reef',type:'circle',source:'reef',paint:{'circle-color':'#8FD0C3','circle-opacity':.7,'circle-radius':['interpolate',['linear'],['zoom'],2,.8,6,2,10,5]}},
+    {id:'box',type:'line',source:'box',paint:{'line-color':'#0A0A0A','line-width':1.2,'line-dasharray':[3,3]}},
+    {id:'ctx',type:'circle',source:'ctx',paint:{'circle-color':'#FFFFFF','circle-stroke-color':'#9AA3AC','circle-stroke-width':1.2,'circle-radius':['interpolate',['linear'],['zoom'],3,1.5,8,3.5,12,5]}},
+    {id:'cur-stack',type:'circle',source:'cur',filter:['>',['get','n'],1],paint:{'circle-color':'rgba(0,0,0,0)','circle-stroke-color':['get','c'],'circle-stroke-width':1.5,'circle-radius':['interpolate',['linear'],['zoom'],3,6,8,10,12,13]}},
+    {id:'cur',type:'circle',source:'cur',paint:{'circle-color':['get','c'],'circle-stroke-color':'#FFFFFF','circle-stroke-width':1.5,'circle-radius':['interpolate',['linear'],['zoom'],3,3.5,8,6.5,12,9]}},
+    {id:'legs',type:'line',source:'legs',paint:{'line-color':'#5C6670','line-width':1}},
+    {id:'spider',type:'circle',source:'spider',paint:{'circle-color':['get','c'],'circle-stroke-color':'#FFFFFF','circle-stroke-width':2,'circle-radius':7}},
+    {id:'hover',type:'circle',source:'cur',filter:['==',['get','k'],''],paint:{'circle-color':'rgba(0,0,0,0)','circle-stroke-color':'#0A0A0A','circle-stroke-width':2.5,'circle-radius':['interpolate',['linear'],['zoom'],3,8,8,12,12,15]}}]}});
+ map.on('load',()=>{ready=true;selectRegion(R.findIndex(r=>r.slug==='hispaniola-puerto-rico-and-lesser-antilles'),200510,false);});
+ map.on('mousemove',onMove);map.on('mouseout',()=>tip(false));map.on('click',onClick);
+ map.on('zoomstart',()=>collapseSpider());
+ $('#zin').onclick=()=>map.zoomIn();$('#zout').onclick=()=>map.zoomOut();$('#zreg').onclick=()=>fitRegion();$('#zworld').onclick=()=>map.fitBounds([[-180,-40],[180,40]],{padding:20,duration:900});
+ $('#tTemp').onclick=()=>setTemp(!tempOn);$('#tReef').onclick=e=>{const on=e.currentTarget.getAttribute('aria-checked')!=='true';e.currentTarget.setAttribute('aria-checked',on);map.setLayoutProperty('reef','visibility',on?'visible':'none');};
+ $('#dx').onclick=closeDrawer;$('#prev').onclick=()=>jumpSurvey(-1);$('#next').onclick=()=>jumpSurvey(1);$('#play').onclick=togglePlay;
+ $('#dl').onclick=downloadCSV;$('#cites').onclick=$('#srcLink').onclick=e=>{e.preventDefault();openCites();};$('#modal').onclick=e=>{if(e.target.id==='modal')$('#modal').classList.remove('open');};
+ addEventListener('resize',()=>drawTimeline());
+}
+const empty=()=>({type:'FeatureCollection',features:[]});
+function fitRegion(dur=900){const [w,s,e,n]=lonBox(reg);map.fitBounds([[w,s],[e,n]],{padding:{top:60,bottom:30,left:30,right:70},duration:dur});}
+function lonBox(r){let [w,s,e,n]=r.bbox;if(r.bbox_lon_0_360){if(w>180)w-=360;if(e>180)e-=360;if(e<w)e+=360;}return [w,s,e,n];}
+// ---------- region selection
+function selectRegion(i,startYM,animate=true){reg=R[i];collapseSpider();closeDrawer();
+ const idx=st.byReg.get(i)||[];const v=S.surveys;const byM=new Map();
+ for(const k of idx){const m=ymOf(v.date[k]);const o=byM.get(m)||byM.set(m,{n:0,sev:0,sum:0,cnt:0,dates:new Set()}).get(m);o.n++;o.dates.add(v.date[k]);if(v.pb[k]!=null){o.sum+=v.pb[k];o.cnt++;if(v.pb[k]>=50)o.sev++;}}
+ st.byM=byM;st.ssta=new Map(reg.monthly.map(m=>[m[0]*100+m[1],m[6]]));
+ months=[];for(let y=reg.first_year;y<=reg.last_year;y++)for(let m=1;m<=12;m++)months.push(y*100+m);
+ // context: every site in the region
+ const sites=[...new Set(idx.map(k=>v.site[k]))];
+ map.getSource('ctx').setData({type:'FeatureCollection',features:sites.map(si=>({type:'Feature',properties:{si},geometry:{type:'Point',coordinates:[S.sites.lon[si],S.sites.lat[si]]}}))});
+ const [w,s,e,n]=lonBox(reg);map.getSource('box').setData({type:'Feature',geometry:{type:'LineString',coordinates:[[w,s],[e,s],[e,n],[w,n],[w,s]]}});
+ fitRegion(animate?1000:0);
+ // default month: the one with the most surveys, unless given
+ let best=startYM;if(!best||!byM.has(best)){best=[...byM.entries()].sort((a,b)=>b[1].n-a[1].n)[0][0];}
+ renderSummary(i,sites.length);renderSources(idx);setMonth(best,true);
+ $('#q').value=reg.name;
+ flash(`${reg.name}: ${sites.length.toLocaleString()} sites, ${idx.length.toLocaleString()} surveys, ${reg.first_year} to ${reg.last_year}. Showing ${fmtYM(best)}.`);
+}
+function renderSummary(i,nSites){const r=R[i];const yrs=r.yearly.length;
+ $('#summary').innerHTML=`<h2 class="rname">${r.name}</h2><div class="rmeta">${r.realm}. ${r.countries.slice(0,4).join(', ')}${r.countries.length>4?` and ${r.countries.length-4} more`:''}.</div>
+ <div class="stats"><div class="stat"><b>${r.surveys.toLocaleString()}</b><span>surveys with a bleaching value</span></div><div class="stat"><b>${nSites.toLocaleString()}</b><span>sites</span></div>
+ <div class="stat"><b>${r.severe_rate==null?'n/a':r.severe_rate+'%'}</b><span>severe (50%+ bleached)${r.rank?`, rank ${r.rank} of 31`:''}</span></div><div class="stat"><b>${r.first_year}–${String(r.last_year).slice(2)}</b><span>${yrs} years with surveys</span></div></div>`;}
+function renderSources(idx){const v=S.surveys,c={};for(const k of idx){const code=S.sources[v.src[k]];c[code]=(c[code]||0)+1;}const tot=idx.length,ent=Object.entries(c).sort((a,b)=>b[1]-a[1]);
+ $('#sources').innerHTML=`<div class="src">${ent.map(([k,n])=>`<span>${(st.srcByCode[k]||{label:k}).label}</span><b>${n.toLocaleString()}</b><span class="bar"><i style="width:${n/tot*100}%"></i></span>`).join('')}</div>`;}
+// ---------- month
+function setMonth(k,quiet){if(!months.includes(k))return;ym=k;collapseSpider();
+ const v=S.surveys,idx=st.byReg.get(R.indexOf(reg))||[];const g=new Map();
+ for(const i of idx){if(ymOf(v.date[i])!==k)continue;const si=v.site[i];const key=S.sites.lat[si].toFixed(4)+','+S.sites.lon[si].toFixed(4);const o=g.get(key)||g.set(key,{si,list:[]}).get(key);o.list.push(i);}
+ st.groups=g;
+ map.getSource('cur').setData({type:'FeatureCollection',features:[...g.entries()].map(([key,o])=>{const pbs=o.list.map(i=>v.pb[i]).filter(x=>x!=null);const mean=pbs.length?pbs.reduce((a,b)=>a+b,0)/pbs.length:null;
+  return {type:'Feature',properties:{k:key,n:o.list.length,mean,c:DOT(mean)},geometry:{type:'Point',coordinates:[S.sites.lon[o.si],S.sites.lat[o.si]]}};}).sort((a,b)=>(a.properties.mean??-1)-(b.properties.mean??-1))});
+ // temperature
+ const key=`${Math.floor(k/100)}-${String(k%100).padStart(2,'0')}`, grid=SSTA.ssta[key]&&reg.slug==='hispaniola-puerto-rico-and-lesser-antilles'?SSTA.ssta[key]:null;
+ const feats=[];if(grid){for(let a=0;a<SSTA.lats.length;a++)for(let b=0;b<SSTA.lons.length;b++){const val=grid[a][b];if(val==null)continue;const la=SSTA.lats[a],lo=SSTA.lons[b];feats.push({type:'Feature',properties:{c:balance(val),v:val},geometry:{type:'Polygon',coordinates:[[[lo-.25,la-.25],[lo+.25,la-.25],[lo+.25,la+.25],[lo-.25,la+.25],[lo-.25,la-.25]]]}});}}
+ map.getSource('temp').setData({type:'FeatureCollection',features:feats});$('#tempnote').style.display=tempOn&&!grid?'block':'none';
+ const o=st.byM.get(k);$('#now').textContent=fmtYM(k);
+ if(!quiet)status(o?`${fmtYM(k)}: ${o.n} surveys at ${g.size} places${o.cnt?`, mean ${Math.round(o.sum/o.cnt)}% bleached`:''}.`:`${fmtYM(k)}: no surveys this month.`);
+ drawTimeline();}
+function status(t){$('#status').textContent=t;}
+function flash(t){status(t);const el=$('#status');el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),900);}
+function setTemp(on){tempOn=on;$('#tTemp').setAttribute('aria-checked',on);map.setLayoutProperty('temp','visibility',on?'visible':'none');setMonth(ym,true);}
+function jumpSurvey(d){const ks=[...st.byM.keys()].sort((a,b)=>a-b);let i=d>0?ks.findIndex(x=>x>ym):ks.findLastIndex(x=>x<ym);if(i<0)return;stopPlay();setMonth(ks[i]);}
+// ---------- timeline (temperature strip, survey effort, survey-date ticks)
+function drawTimeline(){const svg=$('#tl'),W=svg.getBoundingClientRect().width,N=months.length;if(!N)return;const L=118,Rr=8,bw=(W-L-Rr)/N;
+ const x=i=>L+i*bw,maxN=Math.max(...[...st.byM.values()].map(o=>o.n));let s='';
+ s+=`<text x="0" y="16" font-size="11" fill="#5C6670">Temp. vs normal</text><text x="0" y="29" font-size="10" fill="#9AA3AC">at survey sites</text>`;
+ s+=`<text x="0" y="62" font-size="11" fill="#5C6670">Surveys per month</text><text x="0" y="75" font-size="10" fill="#9AA3AC">black = severe</text>`;
+ s+=`<text x="0" y="108" font-size="11" fill="#5C6670">Survey dates</text>`;
+ months.forEach((k,i)=>{const t=st.ssta.get(k);s+=`<rect x="${x(i)}" y="6" width="${Math.max(bw,1)+.3}" height="22" fill="${t==null?'#FFFFFF':balance(t)}"/>`;
+  const o=st.byM.get(k);if(o){const h=Math.max(2,o.n/maxN*40),hs=o.sev/maxN*40;s+=`<rect x="${x(i)}" y="${84-h}" width="${Math.max(bw-.6,1)}" height="${h}" fill="${k===ym?'#5C6670':'#B9C0C7'}"/>`;if(hs)s+=`<rect x="${x(i)}" y="${84-hs}" width="${Math.max(bw-.6,1)}" height="${hs}" fill="#0A0A0A"/>`;
+   const mean=o.cnt?o.sum/o.cnt:null;s+=`<circle class="tick" data-k="${k}" cx="${x(i)+bw/2}" cy="104" r="${k===ym?5.5:3.5}" fill="${DOT(mean)}" stroke="${k===ym?'#0A0A0A':'#FFFFFF'}" stroke-width="${k===ym?2:1}"><title>${fmtYM(k)}: ${o.n} surveys</title></circle>`;}
+  if(k%100===1&&(Math.floor(k/100)%5===0||N<120))s+=`<text x="${x(i)}" y="126" font-size="10" fill="#5C6670">${Math.floor(k/100)}</text>`;});
+ s+=`<rect x="${L}" y="6" width="${W-L-Rr}" height="22" fill="none" stroke="#C9D1D8"/><line x1="${L}" x2="${W-Rr}" y1="84" y2="84" stroke="#0A0A0A"/><line x1="${L}" x2="${W-Rr}" y1="104" y2="104" stroke="#C9D1D8"/>`;
+ const hi=months.indexOf(ym);s+=`<line x1="${x(hi)+bw/2}" x2="${x(hi)+bw/2}" y1="2" y2="116" stroke="#0A0A0A" stroke-width="1.5"/>`;
+ svg.innerHTML=s;svg.setAttribute('aria-valuetext',fmtYM(ym));
+ svg.onpointerdown=e=>{stopPlay();const r=svg.getBoundingClientRect();const pick=ev=>{const i=Math.max(0,Math.min(N-1,Math.floor((ev.clientX-r.left-L)/bw)));if(months[i]!==ym)setMonth(months[i]);};
+  const t=e.target.closest('.tick');if(t){setMonth(+t.dataset.k);return;}pick(e);svg.setPointerCapture(e.pointerId);svg.onpointermove=ev=>pick(ev);svg.onpointerup=()=>{svg.onpointermove=null;};};}
+// ---------- hover, click, spread stacked points
+function onMove(e){if(!ready)return;const f=map.queryRenderedFeatures(e.point,{layers:['spider','cur']})[0];map.getCanvas().style.cursor=f?'pointer':'';
+ map.setFilter('hover',['==',['get','k'],f&&f.layer.id==='cur'?f.properties.k:'']);
+ if(!f){tip(false);return;}const v=S.surveys;let html;
+ if(f.layer.id==='spider'){const i=f.properties.i,si=v.site[i];html=`<b>${S.sites.name[si]||'Unnamed site'}</b><br>${fmtD(v.date[i])}. ${v.pb[i]==null?'No bleaching value':v.pb[i]+'% bleached'}.<br>Source: ${(st.srcByCode[S.sources[v.src[i]]]||{}).label}`;}
+ else{const o=st.groups.get(f.properties.k),si=o.si;const n=o.list.length;html=`<b>${S.sites.name[si]||'Unnamed site'}</b><br>${S.sites.place[si]||''}${S.sites.place[si]?'. ':''}${n} survey${n>1?'s':''} in ${fmtYM(ym)}. ${f.properties.mean==null?'No bleaching value':Math.round(f.properties.mean)+'% bleached on average'}.${n>1?'<br><i>Click to spread them out.</i>':''}`;}
+ tip(true,html,e.point);}
+function tip(on,html,p){const t=$('#tip');if(!on){t.classList.remove('on');return;}t.innerHTML=html;const W=map.getContainer().clientWidth;t.style.left=(p.x+300>W?p.x-300:p.x+14)+'px';t.style.top=(p.y+12)+'px';t.classList.add('on');}
+function onClick(e){const f=map.queryRenderedFeatures(e.point,{layers:['spider','cur','ctx']})[0];
+ if(!f){collapseSpider();return;}
+ // several different places under the cursor: zoom in so they separate
+ if(f.layer.id==='cur'){const near=map.queryRenderedFeatures([[e.point.x-10,e.point.y-10],[e.point.x+10,e.point.y+10]],{layers:['cur']});const keys=new Set(near.map(x=>x.properties.k));
+  if(keys.size>1&&map.getZoom()<10){const b=new maplibregl.LngLatBounds();near.forEach(x=>b.extend(x.geometry.coordinates));map.fitBounds(b,{padding:120,maxZoom:Math.min(12,map.getZoom()+3),duration:700});status(`${keys.size} places close together. Zooming in to separate them.`);return;}
+  if(keys.size>1){const list=[...keys].flatMap(k=>st.groups.get(k).list);expandSpider({si:st.groups.get(f.properties.k).si,list},f.geometry.coordinates);return;}}
+ if(f.layer.id==='spider'){openDrawer(f.properties.i);return;}
+ if(f.layer.id==='ctx'){status(`${S.sites.name[f.properties.si]||'This site'} was not surveyed in ${fmtYM(ym)}. Use the timeline to find its surveys.`);return;}
+ const o=st.groups.get(f.properties.k);if(o.list.length===1){openDrawer(o.list[0]);return;}expandSpider(o,f.geometry.coordinates);}
+function expandSpider(o,c){collapseSpider();const cp=map.project(c),n=o.list.length,R0=Math.max(34,n*5),pts=[],legs=[];
+ o.list.forEach((i,j)=>{const a=-Math.PI/2+j*2*Math.PI/n,p=map.unproject([cp.x+R0*Math.cos(a),cp.y+R0*Math.sin(a)]).toArray();pts.push({type:'Feature',properties:{i,c:DOT(S.surveys.pb[i])},geometry:{type:'Point',coordinates:p}});legs.push({type:'Feature',geometry:{type:'LineString',coordinates:[c,p]}});});
+ map.getSource('spider').setData({type:'FeatureCollection',features:pts});map.getSource('legs').setData({type:'FeatureCollection',features:legs});spider=o;['cur','cur-stack','ctx'].forEach(l=>map.setPaintProperty(l,l==='ctx'?'circle-stroke-opacity':'circle-opacity',.2));
+ status(`${n} surveys at ${S.sites.name[o.si]||'this site'} in ${fmtYM(ym)}, spread out. Click one for details. Esc to close.`);}
+function collapseSpider(){if(!map||!ready)return;spider=null;map.getSource('spider').setData(empty());map.getSource('legs').setData(empty());['cur','cur-stack','ctx'].forEach(l=>map.setPaintProperty(l,l==='ctx'?'circle-stroke-opacity':'circle-opacity',1));}
+// ---------- drawer
+function openDrawer(i){tip(false);const v=S.surveys,si=v.site[i],d=v.date[i];const same=(st.bySite.get(si)||[]).filter(k=>v.date[k]===d);const pbs=same.map(k=>v.pb[k]).filter(x=>x!=null);const mean=pbs.length?pbs.reduce((a,b)=>a+b,0)/pbs.length:null;
+ const later=(st.bySite.get(si)||[]).filter(k=>v.date[k]>d);const lg=new Map();later.forEach(k=>{const a=lg.get(v.date[k])||lg.set(v.date[k],[]).get(v.date[k]);if(v.pb[k]!=null)a.push(v.pb[k]);});
+ const src=st.srcByCode[S.sources[v.src[i]]]||{};const isCane=S.sites.id[si]===8554&&d===20051015;
+ $('#dbody').innerHTML=`<p class="lbl" style="margin-top:6px">${S.countries[S.sites.country[si]]}</p><h2>${S.sites.name[si]||'Unnamed site'}</h2><div class="rmeta">${S.sites.place[si]||''}. Surveyed ${fmtD(d)}. Site ID ${S.sites.id[si]}. ${S.sites.lat[si].toFixed(3)}, ${S.sites.lon[si].toFixed(3)}.</div>
+ <div class="big">${mean==null?'n/a':Math.round(mean)+'%'}</div><div class="rmeta">of coral bleached, mean of ${same.length} survey${same.length>1?'s':''} that day.</div>
+ <table class="sv"><tr><th>Survey</th><th>Bleached</th><th>Cover</th><th>Depth</th></tr>${same.slice(0,12).map((k,j)=>`<tr><td>${j+1}</td><td>${v.pb[k]??'n/a'}${v.pb[k]!=null?'%':''}</td><td>${v.pc[k]??'n/a'}${v.pc[k]!=null?'%':''}</td><td>${v.depth[k]??'n/a'}${v.depth[k]!=null?' m':''}</td></tr>`).join('')}</table>
+ <p class="lbl" style="margin-top:16px">Temperature at survey time (CoRTAD v6, in the database)</p><div class="rmeta">Temperature vs normal (SSTA): <b>${v.ssta[i]??'n/a'} °C</b>. Heat stress (TSA_DHW): <b>${v.dhw[i]??'n/a'}</b>.</div>
+ <p class="lbl" style="margin-top:16px">30 days before and after (NOAA Coral Reef Watch)</p><div class="rmeta">${isCane?'Heat stress rose from 4.6 to 10.2 by the survey day. Sea temperature peaked at 30.5 °C on 25 Sep.':'In the built site this chart loads live from NOAA for this site and date.'}</div>
+ <p class="lbl" style="margin-top:16px">Later surveys here</p><div class="rmeta">${lg.size?[...lg.entries()].slice(0,6).map(([dd,a])=>`${fmtD(dd)}: ${a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length)+'%':'n/a'}`).join('<br>')+'<br><i>A drop can mean recovery. It can also mean bleached coral died.</i>':'No later surveys at this site.'}</div>
+ <p class="lbl" style="margin-top:16px">Source</p><div class="cite"><b style="color:#0A0A0A">${src.label||'Unknown'}</b><br>${src.citation||''} ${src.doi?`<a href="${src.doi}" target="_blank" rel="noopener">${src.doi.replace('https://','')}</a>`:''}${src.url?` <a href="${src.url}" target="_blank" rel="noopener">${src.url.replace('https://','')}</a>`:''}<br><br>Compiled in: ${SRC.database.citation} <a href="${SRC.database.doi}" target="_blank" rel="noopener">${SRC.database.doi.replace('https://','')}</a></div>
+ <button class="btn" style="margin-top:10px" id="copyc">Copy citation</button>`;
+ $('#copyc').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(`${src.citation} ${src.doi||src.url||''}\n${SRC.database.citation} ${SRC.database.doi}`);status('Citation copied.');};
+ $('#drawer').classList.add('open');$('#dx').focus();}
+function closeDrawer(){$('#drawer').classList.remove('open');}
+// ---------- search
+function initSearch(){const q=$('#q'),box=$('#results');let sel=0,items=[];
+ const render=()=>{const t=q.value.trim().toLowerCase();items=R.map((r,i)=>({r,i})).filter(({r})=>!t||r.name.toLowerCase().includes(t)||r.countries.some(c=>c.toLowerCase().includes(t))||r.realm.toLowerCase().includes(t));
+  items.sort((a,b)=>a.r.realm.localeCompare(b.r.realm)||b.r.surveys-a.r.surveys);let html='',last='';
+  items.forEach((it,j)=>{if(it.r.realm!==last){html+=`<div class="grp">${it.r.realm||'Other'}</div>`;last=it.r.realm;}html+=`<div class="opt" role="option" id="o${j}" data-i="${it.i}" aria-selected="${j===sel}"><span>${it.r.name}</span><small>${it.r.surveys.toLocaleString()} surveys</small></div>`;});
+  box.innerHTML=html||'<div class="grp">No eco-region matches.</div>';};
+ const open=o=>{box.classList.toggle('open',o);q.parentElement.setAttribute('aria-expanded',o);};
+ q.addEventListener('focus',()=>{q.select();sel=0;render();open(true);});q.addEventListener('input',()=>{sel=0;render();open(true);});
+ q.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){sel=Math.min(items.length-1,sel+1);render();$('#o'+sel)?.scrollIntoView({block:'nearest'});e.preventDefault();}
+  if(e.key==='ArrowUp'){sel=Math.max(0,sel-1);render();$('#o'+sel)?.scrollIntoView({block:'nearest'});e.preventDefault();}
+  if(e.key==='Enter'&&items[sel]){open(false);q.blur();selectRegion(items[sel].i);}if(e.key==='Escape'){open(false);q.value=reg.name;q.blur();}});
+ box.addEventListener('mousedown',e=>{const o=e.target.closest('.opt');if(o){e.preventDefault();open(false);q.blur();selectRegion(+o.dataset.i);}});
+ q.addEventListener('blur',()=>setTimeout(()=>{open(false);if(reg)q.value=reg.name;},120));}
+// ---------- keys, play
+function bindKeys(){addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;const i=months.indexOf(ym);
+ if(e.key==='ArrowRight'){stopPlay();setMonth(months[Math.min(months.length-1,i+(e.shiftKey?12:1))]);e.preventDefault();}
+ if(e.key==='ArrowLeft'){stopPlay();setMonth(months[Math.max(0,i-(e.shiftKey?12:1))]);e.preventDefault();}
+ if(e.key===']')jumpSurvey(1);if(e.key==='[')jumpSurvey(-1);if(e.key==='t'||e.key==='T')setTemp(!tempOn);if(e.key==='z'||e.key==='Z')fitRegion();if(e.key==='w'||e.key==='W')$('#zworld').click();
+ if(e.key==='/'){e.preventDefault();$('#q').focus();}if(e.key==='Escape'){collapseSpider();closeDrawer();$('#modal').classList.remove('open');}});}
+function togglePlay(){playT?stopPlay():startPlay();}
+function startPlay(){$('#pi').setAttribute('d','M4 3h3v10H4zM9 3h3v10H9z');$('#play').setAttribute('aria-label','Pause');const step=()=>{const i=months.indexOf(ym);if(i>=months.length-1){stopPlay();return;}setMonth(months[i+1]);playT=setTimeout(step,700);};playT=setTimeout(step,300);}
+function stopPlay(){clearTimeout(playT);playT=null;$('#pi').setAttribute('d','M5 3l8 5-8 5z');$('#play').setAttribute('aria-label','Play month by month');}
+// ---------- citations + CSV export
+function openCites(){const s=SRC;$('#mcard').innerHTML=`<h2>Sources and methods</h2><p><b>Survey database.</b> ${s.database.citation} <a href="${s.database.doi}" target="_blank" rel="noopener">${s.database.doi}</a><br>Dataset: ${s.database.dataset} <a href="${s.database.dataset_doi}" target="_blank" rel="noopener">${s.database.dataset_doi}</a></p>
+ <p><b>Original survey sources</b> (each point shows its own):</p><ol>${s.survey_sources.map(x=>`<li><b>${x.label}</b> (${x.surveys.toLocaleString()} surveys). ${x.citation} ${x.doi?`<a href="${x.doi}" target="_blank" rel="noopener">${x.doi}</a>`:''} ${x.url?`<a href="${x.url}" target="_blank" rel="noopener">${x.url}</a>`:''}</li>`).join('')}</ol>
+ <p><b>Temperature in the database.</b> ${s.environment.citation} <a href="${s.environment.doi}" target="_blank" rel="noopener">${s.environment.doi}</a>. ${s.environment.definitions}</p>
+ <p><b>Map temperature layer.</b> Skirving, W., et al. (2020). CoralTemp and the Coral Reef Watch Coral Bleaching Heat Stress Product Suite Version 3.1. Remote Sensing 12(23), 3856. <a href="https://doi.org/10.3390/rs12233856" target="_blank" rel="noopener">doi.org/10.3390/rs12233856</a>. Shown as monthly mean SST anomaly: the difference from the normal temperature for that time of year, so seasons are removed.</p>
+ <p><b>Colour scale.</b> cmocean "balance". Thyng, K. M., et al. (2016). True colors of oceanography. Oceanography 29(3). <a href="https://doi.org/10.5670/oceanog.2016.66" target="_blank" rel="noopener">doi.org/10.5670/oceanog.2016.66</a></p>
+ <p><b>Reef layer.</b> UNEP-WCMC, WorldFish Centre, WRI, TNC (2021). Global distribution of coral reefs, version 4.1. <a href="https://doi.org/10.34892/t2wk-5t34" target="_blank" rel="noopener">doi.org/10.34892/t2wk-5t34</a></p>
+ <button class="btn solid" onclick="document.getElementById('modal').classList.remove('open')">Close</button>`;$('#modal').classList.add('open');}
+function downloadCSV(){if(window.claude||window.parent!==window){status('In this preview the download is blocked. In the built site this saves a CSV of every survey in the region, with its source and citation.');return;}const v=S.surveys,idx=st.byReg.get(R.indexOf(reg))||[];const head='site_id,site_name,country,lat,lon,date,percent_bleached,percent_cover,depth_m,ssta_c_cortad,tsa_dhw_cortad,turbidity,source,source_citation\n';
+ const esc=x=>x==null?'':/[",\n]/.test(String(x))?`"${String(x).replace(/"/g,'""')}"`:x;
+ const rows=idx.map(i=>{const si=v.site[i],src=st.srcByCode[S.sources[v.src[i]]]||{};const d=String(v.date[i]);return [S.sites.id[si],S.sites.name[si],S.countries[S.sites.country[si]],S.sites.lat[si],S.sites.lon[si],`${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6)}`,v.pb[i],v.pc[i],v.depth[i],v.ssta[i],v.dhw[i],v.turb[i],src.label,`${src.citation||''} ${src.doi||src.url||''}`].map(esc).join(',');});
+ const blob=new Blob([`# ${reg.name}. Compiled from ${SRC.database.citation} ${SRC.database.doi}. CC BY 4.0.\n`+head+rows.join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`coral-lytics-${reg.slug}.csv`;a.click();status(`Downloaded ${idx.length.toLocaleString()} surveys with their sources.`);}
+</script>
+</body>
+</html>

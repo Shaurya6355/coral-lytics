@@ -8,8 +8,9 @@ Usage (from the repo root):
 Writes into the output folder:
     surveys.json   every survey, columnar (one array per field) + site table + lookup lists
     explore.json   per year: one entry per surveyed site (worst bleaching that year). Drives Explore dots.
-    regions.json   the 31 ranked regions (and the unranked rest) with stats, bounds, monthly series,
-                   and quantiles for the Event page "compared with its region" strips
+    regions.json   every eco-region (ranked ones first) with stats, bounds, monthly series incl. mean SSTA,
+                   and quantiles for the Event "compared with its region" strips
+    sources.json   citations for the database, each survey source, and the CSV temperature fields
     story.json     every number the four story chapters print, so nothing is typed by hand
 
 Rules used everywhere (keep them identical in the UI copy):
@@ -72,8 +73,7 @@ def qs(series, k=101):
     return [round(float(x), 3) for x in np.quantile(v, np.linspace(0, 1, k))]
 
 
-regions = []
-for name in ranked.index:
+def region_record(name):
     r = d[d.Ecoregion_Name == name]
     rb = r[r.pb.notna()]
     lon = r.Longitude_Degrees
@@ -83,30 +83,38 @@ for name in ranked.index:
         west, east = float(lon360.min()), float(lon360.max())
     else:
         west, east = float(lon.min()), float(lon.max())
-    months = rb.groupby(['yr', 'mo']).agg(n=('pb', 'size'), mean=('pb', 'mean'), severe=('sev', 'sum'), dhw=('TSA_DHW', 'mean'))
+    months = rb.groupby(['yr', 'mo']).agg(n=('pb', 'size'), mean=('pb', 'mean'), severe=('sev', 'sum'),
+                                          dhw=('TSA_DHW', 'mean'), ssta=('SSTA', 'mean'))
     years = rb.groupby('yr').agg(n=('pb', 'size'), severe=('sev', 'sum'))
-    regions.append(dict(
-        id=rank_of[name], rank=rank_of[name] + 1, name=name, slug=slug(name),
+    nn = lambda x, k=2: None if pd.isna(x) else round(float(x), k)
+    return dict(
+        id=None, rank=rank_of[name] + 1 if name in rank_of else None, name=name, slug=slug(name),
         realm=s(r.Realm_Name.iloc[0]), ocean=s(r.Ocean_Name.iloc[0]),
         countries=sorted({s(c) for c in r.Country_Name if s(c)}),
         surveys=int(len(rb)), sites=int(r.Site_ID.nunique()),
-        severe_rate=round(float(rb.sev.mean()) * 100, 1),
+        severe_rate=round(float(rb.sev.mean()) * 100, 1) if len(rb) else None,
         bbox=[round(west - 1, 2), round(float(r.Latitude_Degrees.min()) - 1, 2),
               round(east + 1, 2), round(float(r.Latitude_Degrees.max()) + 1, 2)],
         bbox_lon_0_360=bool(crosses),
         center=[round(float(np.median(lon % 360 if crosses else lon)), 2), round(float(r.Latitude_Degrees.median()), 2)],
         first_year=int(r.yr.min()), last_year=int(r.yr.max()),
-        # monthly: [year, month, surveys, mean % bleached, severe count, mean heat stress (CSV TSA_DHW) or null]
-        monthly=[[int(y), int(m), int(v.n), round(float(v['mean']), 1), int(v.severe), None if pd.isna(v.dhw) else round(float(v.dhw), 2)] for (y, m), v in months.iterrows()],
+        # monthly: [year, month, surveys, mean % bleached, severe count, mean TSA_DHW, mean SSTA]  (CSV values, CoRTAD v6)
+        monthly=[[int(y), int(m), int(v.n), round(float(v['mean']), 1), int(v.severe), nn(v.dhw), nn(v.ssta)] for (y, m), v in months.iterrows()],
         yearly=[[int(y), int(v.n), int(v.severe)] for y, v in years.iterrows()],
-        # 101 quantiles (0th..100th percentile) for the Event page comparison strips
+        # 101 quantiles (0th..100th percentile) for the Event comparison strips. null if fewer than 20 values.
         q_dhw=qs(r.TSA_DHW), q_ssta=qs(r.SSTA), q_turb=qs(r.Turbidity),
-    ))
-others = g[g.n < 200].sort_values('n', ascending=False)
-json.dump(dict(rule='Ranked = 200+ surveys with a bleaching value. Sorted by severe rate.',
-               ranked=regions,
-               unranked=[dict(name=n, surveys=int(v.n), severe_rate=round(float(v.sev) * 100, 1)) for n, v in others.iterrows()]),
+    )
+
+
+all_names = list(ranked.index) + sorted(set(d.Ecoregion_Name.dropna()) - set(ranked.index))
+regions_all = [region_record(n) for n in all_names]
+for i, r in enumerate(regions_all):
+    r['id'] = i          # ranked regions come first, so id == rank - 1 for them
+regions = [r for r in regions_all if r['rank']]
+json.dump(dict(rule='All eco-regions with surveys. Ranked (rank not null) = 200+ surveys with a bleaching value, sorted by severe rate. id indexes this list.',
+               regions=regions_all),
           open(f'{OUT}/regions.json', 'w'), separators=(',', ':'))
+eco_id = {r['name']: r['id'] for r in regions_all}
 
 # ---------- surveys (columnar)
 site_ids = sorted(d.Site_ID.unique())
@@ -122,7 +130,7 @@ sites = dict(
     place=[s(first.loc[x, 'State_Island_Province_Name']) for x in site_ids],
     country=[li['Country_Name'][s(first.loc[x, 'Country_Name'])] for x in site_ids],
     eco=[li['Ecoregion_Name'][s(first.loc[x, 'Ecoregion_Name'])] for x in site_ids],
-    region=[rank_of.get(first.loc[x, 'Ecoregion_Name'], -1) for x in site_ids],  # -1 = not ranked
+    region=[eco_id.get(first.loc[x, 'Ecoregion_Name'], -1) for x in site_ids],  # index into regions.json regions
     exposure=[li['Exposure'][s(first.loc[x, 'Exposure'])] for x in site_ids],
 )
 
@@ -175,8 +183,38 @@ story = dict(
 )
 json.dump(story, open(f'{OUT}/story.json', 'w'), indent=1)
 
-for f in ['surveys.json', 'explore.json', 'regions.json', 'story.json']:
-    print(f'{f:14s} {os.path.getsize(f"{OUT}/{f}") / 1e6:.2f} MB')
+# ---------- sources (for peer review)
+SRC = {
+ 'Reef_Check': ('Reef Check', 'Hodgson, G. (1999). A global assessment of human effects on coral reefs. Marine Pollution Bulletin 38, 345-355.', 'https://doi.org/10.1016/S0025-326X(99)00002-8', 'https://www.reefcheck.org/global-reef-tracker/'),
+ 'Donner': ('Donner et al. 2017', 'Donner, S. D., Rickbeil, G. J. M., & Heron, S. F. (2017). A new, high-resolution global mass coral bleaching database. PLOS ONE 12(4), e0175490.', 'https://doi.org/10.1371/journal.pone.0175490', None),
+ 'AGRRA': ('AGRRA', 'Marks, K. W. (2018). AGRRA Database, version 2018-03. Atlantic and Gulf Rapid Reef Assessment.', None, 'https://www.agrra.org'),
+ 'FRRP': ('Florida Reef Resilience Program', 'Florida Fish and Wildlife Conservation Commission (2020). FRRP Disturbance Response Monitoring 2005-2020. Unpublished data.', None, 'https://ocean.floridamarine.org/FRRP/'),
+ 'Kumagai': ('Kumagai et al. 2018', 'Kumagai, N. H., Yamano, H., & Sango-Map-Project Committee (2018). High-resolution modelling of thermal thresholds and environmental influences on coral bleaching for local and regional reef management. PeerJ 6, e4382.', 'https://doi.org/10.7717/peerj.4382', None),
+ 'McClanahan': ('McClanahan et al. 2019', 'McClanahan, T. R., et al. (2019). Temperature patterns and mechanisms influencing coral bleaching during the 2016 El Nino. Nature Climate Change 9, 845-851.', 'https://doi.org/10.1038/s41558-019-0576-8', None),
+ 'Safaie': ('Safaie et al. 2018', 'Safaie, A., et al. (2018). High frequency temperature variability reduces the risk of coral bleaching. Nature Communications 9, 1671.', 'https://doi.org/10.1038/s41467-017-02088-w', None),
+ 'Nuryana': ('Nuryana (via GCBD)', 'Record compiled in the Global Coral-Bleaching Database. Cite van Woesik and Kratochwill (2022).', 'https://doi.org/10.1038/s41597-022-01121-y', None),
+ 'Setiawan': ('Setiawan (via GCBD)', 'Record compiled in the Global Coral-Bleaching Database. Cite van Woesik and Kratochwill (2022).', 'https://doi.org/10.1038/s41597-022-01121-y', None),
+}
+cnt = d.Data_Source.value_counts()
+json.dump(dict(
+    database=dict(label='Global Coral-Bleaching Database (GCBD)',
+                  citation='van Woesik, R., & Kratochwill, C. (2022). A global coral-bleaching database, 1980-2020. Scientific Data 9, 20.',
+                  doi='https://doi.org/10.1038/s41597-022-01121-y',
+                  dataset='van Woesik, R., & Burkepile, D. (2022). Bleaching and environmental data for global coral reef sites from 1980-2020. BCO-DMO, version 2. CC BY 4.0.',
+                  dataset_doi='https://doi.org/10.26008/1912/bco-dmo.773466.2'),
+    environment=dict(label='CoRTAD Version 6 (temperature values in the survey data)',
+                     citation='Saha, K., et al. (2018). The Coral Reef Temperature Anomaly Database (CoRTAD) Version 6. NOAA NCEI.',
+                     doi='https://doi.org/10.25921/ffw7-cs39',
+                     definitions='SSTA = weekly SST minus weekly climatological SST (degrees C). TSA_DHW = sum of the previous 12 weeks when TSA >= 1 degree C, where TSA = weekly SST minus the maximum weekly climatological SST.'),
+    survey_sources=[dict(code=k, label=v[0], citation=v[1], doi=v[2], url=v[3], surveys=int(cnt.get(k, 0)))
+                    for k, v in SRC.items()],
+), open(f'{OUT}/sources.json', 'w'), indent=1)
+missing_src = sorted(set(lists['Data_Source']) - set(SRC) - {''})
+if missing_src:
+    print('WARNING: sources without a citation:', missing_src)
+
 print('surveys', len(d), 'sites', len(site_ids), 'ranked regions', len(regions))
-print('top 3:', [(r['name'], r['severe_rate']) for r in regions[:3]])
+print('eco-regions', len(regions_all), 'top 3:', [(r['name'], r['severe_rate']) for r in regions[:3]])
 print('heat bins:', [(x['label'], x['severe_rate']) for x in heat_bins])
+for f in ['surveys.json', 'explore.json', 'regions.json', 'story.json', 'sources.json']:
+    print(f'{f:14s} {os.path.getsize(f"{OUT}/{f}") / 1e6:.2f} MB')

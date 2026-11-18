@@ -1,0 +1,89 @@
+{
+ "database": {
+  "label": "Global Coral-Bleaching Database (GCBD)",
+  "citation": "van Woesik, R., & Kratochwill, C. (2022). A global coral-bleaching database, 1980-2020. Scientific Data 9, 20.",
+  "doi": "https://doi.org/10.1038/s41597-022-01121-y",
+  "dataset": "van Woesik, R., & Burkepile, D. (2022). Bleaching and environmental data for global coral reef sites from 1980-2020. BCO-DMO, version 2. CC BY 4.0.",
+  "dataset_doi": "https://doi.org/10.26008/1912/bco-dmo.773466.2"
+ },
+ "environment": {
+  "label": "CoRTAD Version 6 (temperature values in the survey data)",
+  "citation": "Saha, K., et al. (2018). The Coral Reef Temperature Anomaly Database (CoRTAD) Version 6. NOAA NCEI.",
+  "doi": "https://doi.org/10.25921/ffw7-cs39",
+  "definitions": "SSTA = weekly SST minus weekly climatological SST (degrees C). TSA_DHW = sum of the previous 12 weeks when TSA >= 1 degree C, where TSA = weekly SST minus the maximum weekly climatological SST."
+ },
+ "survey_sources": [
+  {
+   "code": "Reef_Check",
+   "label": "Reef Check",
+   "citation": "Hodgson, G. (1999). A global assessment of human effects on coral reefs. Marine Pollution Bulletin 38, 345-355.",
+   "doi": "https://doi.org/10.1016/S0025-326X(99)00002-8",
+   "url": "https://www.reefcheck.org/global-reef-tracker/",
+   "surveys": 28821
+  },
+  {
+   "code": "Donner",
+   "label": "Donner et al. 2017",
+   "citation": "Donner, S. D., Rickbeil, G. J. M., & Heron, S. F. (2017). A new, high-resolution global mass coral bleaching database. PLOS ONE 12(4), e0175490.",
+   "doi": "https://doi.org/10.1371/journal.pone.0175490",
+   "url": null,
+   "surveys": 6307
+  },
+  {
+   "code": "AGRRA",
+   "label": "AGRRA",
+   "citation": "Marks, K. W. (2018). AGRRA Database, version 2018-03. Atlantic and Gulf Rapid Reef Assessment.",
+   "doi": null,
+   "url": "https://www.agrra.org",
+   "surveys": 2848
+  },
+  {
+   "code": "FRRP",
+   "label": "Florida Reef Resilience Program",
+   "citation": "Florida Fish and Wildlife Conservation Commission (2020). FRRP Disturbance Response Monitoring 2005-2020. Unpublished data.",
+   "doi": null,
+   "url": "https://ocean.floridamarine.org/FRRP/",
+   "surveys": 2394
+  },
+  {
+   "code": "Kumagai",
+   "label": "Kumagai et al. 2018",
+   "citation": "Kumagai, N. H., Yamano, H., & Sango-Map-Project Committee (2018). High-resolution modelling of thermal thresholds and environmental influences on coral bleaching for local and regional reef management. PeerJ 6, e4382.",
+   "doi": "https://doi.org/10.7717/peerj.4382",
+   "url": null,
+   "surveys": 667
+  },
+  {
+   "code": "McClanahan",
+   "label": "McClanahan et al. 2019",
+   "citation": "McClanahan, T. R., et al. (2019). Temperature patterns and mechanisms influencing coral bleaching during the 2016 El Nino. Nature Climate Change 9, 845-851.",
+   "doi": "https://doi.org/10.1038/s41558-019-0576-8",
+   "url": null,
+   "surveys": 234
+  },
+  {
+   "code": "Safaie",
+   "label": "Safaie et al. 2018",
+   "citation": "Safaie, A., et al. (2018). High frequency temperature variability reduces the risk of coral bleaching. Nature Communications 9, 1671.",
+   "doi": "https://doi.org/10.1038/s41467-017-02088-w",
+   "url": null,
+   "surveys": 81
+  },
+  {
+   "code": "Nuryana",
+   "label": "Nuryana (via GCBD)",
+   "citation": "Record compiled in the Global Coral-Bleaching Database. Cite van Woesik and Kratochwill (2022).",
+   "doi": "https://doi.org/10.1038/s41597-022-01121-y",
+   "url": null,
+   "surveys": 5
+  },
+  {
+   "code": "Setiawan",
+   "label": "Setiawan (via GCBD)",
+   "citation": "Record compiled in the Global Coral-Bleaching Database. Cite van Woesik and Kratochwill (2022).",
+   "doi": "https://doi.org/10.1038/s41597-022-01121-y",
+   "url": null,
+   "surveys": 4
+  }
+ ]
+}

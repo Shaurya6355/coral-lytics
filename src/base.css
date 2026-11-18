@@ -34,6 +34,11 @@ img{display:block;max-width:100%}
   background:var(--white);color:var(--ink);border-bottom:1px solid var(--hair);transition:background-color var(--t-base) linear,color var(--t-base) linear,border-color var(--t-base) linear}
 .nav[data-ground="dark"]{background:var(--black);color:var(--ink-d);border-color:var(--hair-d)}
 body[data-compact="1"]{--nav-h:64px}
+body[data-compact="explore"]{--nav-h:56px}
+body[data-compact="explore"] .nav{padding:0 24px;gap:48px}
+body[data-compact="explore"] .nav-logo{font-size:19px}
+.nav [hidden]{display:none}
+
 .nav-logo{font-size:20px;font-weight:700;letter-spacing:-.02em;text-decoration:none}
 .nav-links{display:flex;gap:32px;margin-right:auto}
 .nav a.nav-link{font-size:15px;font-weight:500;color:var(--muted);text-decoration:none;padding:8px 0;border-bottom:2px solid transparent;transition:color var(--t-fast) ease-out}
@@ -90,7 +95,9 @@ button.glass-pill:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(1
 .legend-pill .sep{width:1px;height:16px;background:var(--hair)}
 .dot{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:-2px;margin-right:6px}
 .dot.w{border:1px solid var(--ink)}
-.c0{background:var(--c0)}.c1{background:var(--c1)}.c2{background:var(--c2)}.c3{background:var(--c3)}
+.c0{background:var(--d0)}.c1{background:var(--d1)}.c2{background:var(--d2)}.c3{background:var(--d3)}
+.dot{box-shadow:0 0 0 1px rgba(10,10,10,.12)}
+.dark .dot,.on-dark .dot{box-shadow:none}
 
 /* ---------- OWID-style chart ---------- */
 .owid h2{font-size:22px;line-height:1.25;font-weight:650;letter-spacing:-.015em}

@@ -21,3 +21,19 @@
 - Zoom buttons omitted.
 - Live NOAA was only tested against a mock, because the build sandbox blocks NOAA. Test it once on a normal network.
 - Fonts: Inter Tight loads from Google Fonts. It was not reachable in the sandbox.
+
+## v2 update (17 Nov 2026)
+- Explore rebuilt as an eco-region workspace (src/pages/explore.js and src/explore/*). MapLibre GL 5, loaded only on Explore. The old world scrubber, Region and Event pages are gone. Old #/region and #/event links redirect.
+- Temperature layer is the monthly NOAA Coral Reef Watch sea temperature anomaly, with a blue to white to red scale. Hispaniola 2005 reads from a local file. Other months load from ERDDAP after a 400 ms debounce.
+- Survey dots are grey to black. No red, orange or yellow is used for bleaching anywhere. Story dots and the Heat bars were recoloured to match.
+- Same-place surveys group into one dot. Click zooms in, then spreads them out. Esc closes.
+- Drawer shows the survey table, local 30 day chart, later surveys and the source citation. Sources page at #/sources. CSV export per region (Belize: 4,001 rows, every row has a source).
+- Keys: arrows (month), Shift+arrows (year), [ and ] (survey dates), T (temperature), Z (region), W (world), / (search), Esc.
+- OpenFreeMap style loads with an 8 s timeout. If it fails, a built in offline Natural Earth map is used.
+- Removed the duplicate pages.yml workflow. deploy.yml stays.
+
+### Tested and not tested
+- Tested headless (Chrome, software WebGL): all Done-when checks for steps 6 to 12 and 14, with NOAA mocked.
+- NOT tested live: NOAA ERDDAP and OpenFreeMap tiles are blocked in the build sandbox. Open the live site once and check that tiles and temperature cells load for a month other than Oct 2005.
+- The land mask layer that hides temperature cells over land in the online style is unverified against real OpenFreeMap tiles.
+- maplibre chunk is about 1 MB (loads only on Explore).
